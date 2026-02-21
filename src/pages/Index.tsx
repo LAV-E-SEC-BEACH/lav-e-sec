@@ -2,15 +2,20 @@ import { useState } from "react";
 import { NewOrderForm } from "@/components/NewOrderForm";
 import { OrderMessages } from "@/components/OrderMessages";
 import { OrdersTable } from "@/components/OrdersTable";
-import { Order, calculateTotal, formatDate } from "@/lib/laundry";
+import { OrderDetailDialog } from "@/components/OrderDetailDialog";
+import { AppSidebar } from "@/components/AppSidebar";
+import { Order, calculateTotal, formatDate, formatCurrency } from "@/lib/laundry";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { WashingMachine, X } from "lucide-react";
+import { Plus, Moon, Sun, ChevronRight } from "lucide-react";
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState("orders");
+  const [showForm, setShowForm] = useState(false);
 
   const handleNewOrder = (name: string, phone: string, baskets: number) => {
     const order: Order = {
@@ -24,12 +29,17 @@ const Index = () => {
     };
     setOrders((prev) => [order, ...prev]);
     setSelectedOrder(order);
+    setDialogOpen(true);
+    setShowForm(false);
     toast.success("Atendimento registrado com sucesso!");
   };
 
   const handleDelete = (id: string) => {
     setOrders((prev) => prev.filter((o) => o.id !== id));
-    if (selectedOrder?.id === id) setSelectedOrder(null);
+    if (selectedOrder?.id === id) {
+      setSelectedOrder(null);
+      setDialogOpen(false);
+    }
     toast.info("Atendimento removido.");
   };
 
@@ -37,88 +47,147 @@ const Index = () => {
     setOrders((prev) =>
       prev.map((o) => (o.id === id ? { ...o, status } : o))
     );
-    if (selectedOrder?.id === id) {
-      setSelectedOrder((prev) => prev ? { ...prev, status } : null);
-    }
+    setSelectedOrder((prev) => (prev?.id === id ? { ...prev, status } : prev));
+    const labels = { washing: "Em Lavagem", ready: "Pronto", picked_up: "Finalizado" };
+    toast.success(`Status alterado para: ${labels[status]}`);
+  };
+
+  const handleSelectOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setDialogOpen(true);
   };
 
   const todayOrders = orders.filter((o) => o.date === formatDate(new Date()));
   const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
-              <WashingMachine className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">Lavanderia</h1>
-              <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
-            </div>
+    <div className="min-h-screen bg-background flex">
+      <AppSidebar currentPage={currentPage} onNavigate={setCurrentPage} />
+
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <header className="h-14 border-b bg-card flex items-center justify-between px-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <span>Home</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span>Ordens de Serviço</span>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="text-foreground font-medium">Listagem</span>
           </div>
-          <div className="flex items-center gap-4 text-sm">
-            <div className="text-right">
-              <p className="text-muted-foreground">Hoje</p>
-              <p className="font-bold text-lg font-['Space_Grotesk']">{todayOrders.length} atendimentos</p>
-            </div>
-            <Badge variant="secondary" className="text-base px-3 py-1 font-['Space_Grotesk'] font-bold">
-              R$ {todayTotal.toFixed(2).replace(".", ",")}
+          <div className="flex items-center gap-3">
+            <Badge variant="secondary" className="font-['Space_Grotesk'] font-bold px-3 py-1">
+              Hoje: {todayOrders.length} · {formatCurrency(todayTotal)}
             </Badge>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left: Form */}
-          <div className="lg:col-span-1">
-            <NewOrderForm onSubmit={handleNewOrder} />
-          </div>
-
-          {/* Right: Messages or Table */}
-          <div className="lg:col-span-2 space-y-6">
-            {selectedOrder ? (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-bold">{selectedOrder.name}</h2>
-                    <p className="text-sm text-muted-foreground">{selectedOrder.phone}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      {(["washing", "ready", "picked_up"] as const).map((s) => (
-                        <Button
-                          key={s}
-                          size="sm"
-                          variant={selectedOrder.status === s ? "default" : "outline"}
-                          onClick={() => handleStatusChange(selectedOrder.id, s)}
-                        >
-                          {s === "washing" ? "Lavando" : s === "ready" ? "Pronto" : "Retirado"}
-                        </Button>
-                      ))}
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => setSelectedOrder(null)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
+        {/* Page Content */}
+        <main className="flex-1 p-6">
+          {currentPage === "orders" && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight">📋 Ordens de Serviço</h1>
                 </div>
-                <OrderMessages order={selectedOrder} />
+                <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Nova Ordem
+                </Button>
               </div>
-            ) : null}
 
-            <div>
-              <h2 className="text-lg font-bold mb-3">Atendimentos do Dia</h2>
-              <OrdersTable orders={todayOrders} onSelect={setSelectedOrder} onDelete={handleDelete} />
+              {showForm && (
+                <div className="max-w-md">
+                  <NewOrderForm onSubmit={handleNewOrder} />
+                </div>
+              )}
+
+              <OrdersTable
+                orders={orders}
+                onSelect={handleSelectOrder}
+                onDelete={handleDelete}
+              />
             </div>
-          </div>
-        </div>
-      </main>
+          )}
+
+          {currentPage === "dashboard" && (
+            <div className="space-y-5">
+              <h1 className="text-2xl font-bold tracking-tight">📊 Dashboard</h1>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border bg-card p-5">
+                  <p className="text-sm text-muted-foreground">Atendimentos Hoje</p>
+                  <p className="text-3xl font-bold font-['Space_Grotesk'] mt-1">{todayOrders.length}</p>
+                </div>
+                <div className="rounded-lg border bg-card p-5">
+                  <p className="text-sm text-muted-foreground">Faturamento Hoje</p>
+                  <p className="text-3xl font-bold font-['Space_Grotesk'] mt-1 text-primary">{formatCurrency(todayTotal)}</p>
+                </div>
+                <div className="rounded-lg border bg-card p-5">
+                  <p className="text-sm text-muted-foreground">Em Lavagem</p>
+                  <p className="text-3xl font-bold font-['Space_Grotesk'] mt-1 text-warning">
+                    {orders.filter((o) => o.status === "washing").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentPage === "clients" && (
+            <div className="space-y-5">
+              <h1 className="text-2xl font-bold tracking-tight">👥 Clientes</h1>
+              {orders.length === 0 ? (
+                <p className="text-muted-foreground">Nenhum cliente registrado ainda.</p>
+              ) : (
+                <div className="rounded-lg border bg-card overflow-hidden">
+                  <Table orders={orders} />
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      <OrderDetailDialog
+        order={selectedOrder}
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        onStatusChange={handleStatusChange}
+      />
     </div>
   );
 };
+
+// Simple clients table
+function Table({ orders }: { orders: Order[] }) {
+  const clients = orders.reduce<Record<string, { name: string; phone: string; totalOrders: number; totalSpent: number }>>((acc, o) => {
+    const key = o.phone;
+    if (!acc[key]) acc[key] = { name: o.name, phone: o.phone, totalOrders: 0, totalSpent: 0 };
+    acc[key].totalOrders++;
+    acc[key].totalSpent += o.total;
+    return acc;
+  }, {});
+
+  return (
+    <table className="w-full text-sm">
+      <thead>
+        <tr className="border-b bg-muted/40">
+          <th className="text-left p-4 font-medium text-muted-foreground">CLIENTE</th>
+          <th className="text-left p-4 font-medium text-muted-foreground">TELEFONE</th>
+          <th className="text-center p-4 font-medium text-muted-foreground">ORDENS</th>
+          <th className="text-right p-4 font-medium text-muted-foreground">TOTAL GASTO</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.values(clients).map((c) => (
+          <tr key={c.phone} className="border-b hover:bg-muted/30">
+            <td className="p-4 font-medium">{c.name}</td>
+            <td className="p-4 text-muted-foreground">{c.phone}</td>
+            <td className="p-4 text-center">{c.totalOrders}</td>
+            <td className="p-4 text-right font-['Space_Grotesk'] font-medium">{formatCurrency(c.totalSpent)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 export default Index;
