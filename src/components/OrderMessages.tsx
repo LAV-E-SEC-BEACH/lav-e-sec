@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Order, generateEntryMessage, generatePickupMessage, generateWhatsAppLink } from "@/lib/laundry";
 import { MessageCircle } from "lucide-react";
 
@@ -11,20 +12,52 @@ export function OrderMessages({ order }: Props) {
   const pickupMsg = generatePickupMessage(order.name);
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <Button variant="outline" className="gap-2 h-auto py-3 flex-col" asChild>
-        <a href={generateWhatsAppLink(order.phone, entryMsg)} target="_blank" rel="noopener noreferrer">
-          <MessageCircle className="h-5 w-5 text-primary" />
-          <span className="text-xs">WhatsApp Entrada</span>
-        </a>
-      </Button>
+    <div className="space-y-4">
+      {/* Mensagem de Entrada */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2 text-primary">
+            <MessageCircle className="h-4 w-4" />
+            Mensagem de Entrada
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md bg-muted p-3 text-sm whitespace-pre-line select-all cursor-text">
+            {entryMsg}
+          </div>
+          <div className="mt-2 flex justify-end">
+            <Button size="sm" asChild className="gap-1.5">
+              <a href={generateWhatsAppLink(order.phone, entryMsg)} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-3.5 w-3.5" />
+                Enviar WhatsApp
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      <Button variant="outline" className="gap-2 h-auto py-3 flex-col" asChild>
-        <a href={generateWhatsAppLink(order.phone, pickupMsg)} target="_blank" rel="noopener noreferrer">
-          <MessageCircle className="h-5 w-5 text-accent" />
-          <span className="text-xs">WhatsApp Retirada</span>
-        </a>
-      </Button>
+      {/* Mensagem de Retirada */}
+      <Card className="border-0 shadow-md">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2 text-accent">
+            <MessageCircle className="h-4 w-4" />
+            Mensagem de Retirada
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md bg-muted p-3 text-sm whitespace-pre-line select-all cursor-text">
+            {pickupMsg}
+          </div>
+          <div className="mt-2 flex justify-end">
+            <Button size="sm" asChild className="gap-1.5">
+              <a href={generateWhatsAppLink(order.phone, pickupMsg)} target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="h-3.5 w-3.5" />
+                Enviar WhatsApp
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
