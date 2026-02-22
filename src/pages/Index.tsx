@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NewOrderForm } from "@/components/NewOrderForm";
+import { useState, useMemo } from "react";
+import { NewOrderForm, KnownClient } from "@/components/NewOrderForm";
 import { OrderMessages } from "@/components/OrderMessages";
 import { OrdersTable } from "@/components/OrdersTable";
 import { OrderDetailDialog } from "@/components/OrderDetailDialog";
@@ -64,6 +64,14 @@ const Index = () => {
     setDialogOpen(true);
   };
 
+  // Build unique known clients from orders + registered clients
+  const knownClients = useMemo<KnownClient[]>(() => {
+    const map = new Map<string, KnownClient>();
+    orders.forEach((o) => map.set(o.phone, { name: o.name, phone: o.phone }));
+    clients.forEach((c) => map.set(c.phone, { name: c.name, phone: c.phone }));
+    return Array.from(map.values());
+  }, [orders, clients]);
+
   const todayOrders = orders.filter((o) => o.date === formatDate(new Date()));
   const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
@@ -104,7 +112,7 @@ const Index = () => {
 
               {showForm && (
                 <div className="max-w-md">
-                  <NewOrderForm onSubmit={handleNewOrder} />
+                  <NewOrderForm onSubmit={handleNewOrder} knownClients={knownClients} />
                 </div>
               )}
 
