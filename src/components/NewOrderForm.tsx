@@ -1,21 +1,44 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { calculateTotal, formatCurrency, PRICE_PER_BASKET } from "@/lib/laundry";
 import { Plus, Minus, ShoppingBasket } from "lucide-react";
 
-interface Props {
-  onSubmit: (name: string, phone: string, baskets: number) => void;
+export interface KnownClient {
+  name: string;
+  phone: string;
 }
 
-export function NewOrderForm({ onSubmit }: Props) {
+interface Props {
+  onSubmit: (name: string, phone: string, baskets: number) => void;
+  knownClients?: KnownClient[];
+}
+
+export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [baskets, setBaskets] = useState(1);
+  const [nameOpen, setNameOpen] = useState(false);
 
   const total = calculateTotal(baskets);
+
+  const filteredClients = useMemo(() => {
+    if (!name.trim()) return knownClients;
+    const q = name.toLowerCase();
+    return knownClients.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q)
+    );
+  }, [name, knownClients]);
+
+  const handleSelectClient = (client: KnownClient) => {
+    setName(client.name);
+    setPhone(client.phone);
+    setNameOpen(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,14 +63,45 @@ export function NewOrderForm({ onSubmit }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nome do Cliente *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: João Silva"
-              maxLength={100}
-              required
-            />
+            <Popover open={nameOpen && filteredClients.length > 0} onOpenChange={setNameOpen}>
+              <PopoverTrigger asChild>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setNameOpen(true);
+                  }}
+                  onFocus={() => setNameOpen(true)}
+                  placeholder="Ex: João Silva"
+                  maxLength={100}
+                  required
+                  autoComplete="off"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
+                <Command>
+                  <CommandList>
+                    <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                    <CommandGroup heading="Clientes cadastrados">
+                      {filteredClients.map((c) => (
+                        <CommandItem
+                          key={c.phone}
+                          value={`${c.name} ${c.phone}`}
+                          onSelect={() => handleSelectClient(c)}
+                          className="cursor-pointer"
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{c.name}</span>
+                            <span className="text-xs text-muted-foreground">{c.phone}</span>
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
