@@ -8,7 +8,8 @@ import { Order, calculateTotal, formatDate, formatCurrency } from "@/lib/laundry
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Moon, Sun, ChevronRight } from "lucide-react";
+import { Plus, Moon, Sun, ChevronRight, UserPlus } from "lucide-react";
+import { NewClientDialog, Client } from "@/components/NewClientDialog";
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -16,6 +17,8 @@ const Index = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("orders");
   const [showForm, setShowForm] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [showClientDialog, setShowClientDialog] = useState(false);
 
   const handleNewOrder = (name: string, phone: string, baskets: number) => {
     const order: Order = {
@@ -50,6 +53,10 @@ const Index = () => {
     setSelectedOrder((prev) => (prev?.id === id ? { ...prev, status } : prev));
     const labels = { washing: "Em Lavagem", ready: "Pronto", picked_up: "Finalizado" };
     toast.success(`Status alterado para: ${labels[status]}`);
+  };
+
+  const handleAddClient = (client: Client) => {
+    setClients((prev) => [client, ...prev]);
   };
 
   const handleSelectOrder = (order: Order) => {
@@ -133,18 +140,30 @@ const Index = () => {
 
           {currentPage === "clients" && (
             <div className="space-y-5">
-              <h1 className="text-2xl font-bold tracking-tight">👥 Clientes</h1>
-              {orders.length === 0 ? (
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold tracking-tight">👥 Clientes</h1>
+                <Button onClick={() => setShowClientDialog(true)} className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Novo Cliente
+                </Button>
+              </div>
+              {clients.length === 0 && orders.length === 0 ? (
                 <p className="text-muted-foreground">Nenhum cliente registrado ainda.</p>
               ) : (
                 <div className="rounded-lg border bg-card overflow-hidden">
-                  <Table orders={orders} />
+                  <ClientsTable clients={clients} orders={orders} />
                 </div>
               )}
             </div>
           )}
         </main>
       </div>
+
+      <NewClientDialog
+        open={showClientDialog}
+        onClose={() => setShowClientDialog(false)}
+        onSubmit={handleAddClient}
+      />
 
       <OrderDetailDialog
         order={selectedOrder}
@@ -156,15 +175,24 @@ const Index = () => {
   );
 };
 
-// Simple clients table
-function Table({ orders }: { orders: Order[] }) {
-  const clients = orders.reduce<Record<string, { name: string; phone: string; totalOrders: number; totalSpent: number }>>((acc, o) => {
+// Clients table merging registered clients + order-derived clients
+function ClientsTable({ clients, orders }: { clients: Client[]; orders: Order[] }) {
+  const fromOrders = orders.reduce<Record<string, { name: string; phone: string; totalOrders: number; totalSpent: number }>>((acc, o) => {
     const key = o.phone;
     if (!acc[key]) acc[key] = { name: o.name, phone: o.phone, totalOrders: 0, totalSpent: 0 };
     acc[key].totalOrders++;
     acc[key].totalSpent += o.total;
     return acc;
   }, {});
+
+  // Merge standalone clients
+  clients.forEach((c) => {
+    if (!fromOrders[c.phone]) {
+      fromOrders[c.phone] = { name: c.name, phone: c.phone, totalOrders: 0, totalSpent: 0 };
+    }
+  });
+
+  const allClients = Object.values(fromOrders);
 
   return (
     <table className="w-full text-sm">
@@ -177,7 +205,7 @@ function Table({ orders }: { orders: Order[] }) {
         </tr>
       </thead>
       <tbody>
-        {Object.values(clients).map((c) => (
+        {allClients.map((c) => (
           <tr key={c.phone} className="border-b hover:bg-muted/30">
             <td className="p-4 font-medium">{c.name}</td>
             <td className="p-4 text-muted-foreground">{c.phone}</td>
