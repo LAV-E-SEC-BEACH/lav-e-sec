@@ -11,6 +11,10 @@ export function OrderMessages({ order }: Props) {
   const entryMsg = generateEntryMessage(order.name, order.baskets, order.total);
   const pickupMsg = generatePickupMessage(order.name);
 
+  const openWhatsApp = (phone: string, message: string) => {
+    window.open(generateWhatsAppLink(phone, message), "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div className="space-y-4">
       {/* Mensagem de Entrada */}
@@ -26,11 +30,9 @@ export function OrderMessages({ order }: Props) {
             {entryMsg}
           </div>
           <div className="mt-2 flex justify-end">
-            <Button size="sm" asChild className="gap-1.5">
-              <a href={generateWhatsAppLink(order.phone, entryMsg)} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-3.5 w-3.5" />
-                Enviar WhatsApp
-              </a>
+            <Button size="sm" className="gap-1.5" onClick={() => openWhatsApp(order.phone, entryMsg)}>
+              <MessageCircle className="h-3.5 w-3.5" />
+              Enviar WhatsApp
             </Button>
           </div>
         </CardContent>
@@ -49,11 +51,9 @@ export function OrderMessages({ order }: Props) {
             {pickupMsg}
           </div>
           <div className="mt-2 flex justify-end">
-            <Button size="sm" asChild className="gap-1.5">
-              <a href={generateWhatsAppLink(order.phone, pickupMsg)} target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="h-3.5 w-3.5" />
-                Enviar WhatsApp
-              </a>
+            <Button size="sm" className="gap-1.5" onClick={() => openWhatsApp(order.phone, pickupMsg)}>
+              <MessageCircle className="h-3.5 w-3.5" />
+              Enviar WhatsApp
             </Button>
           </div>
         </CardContent>
