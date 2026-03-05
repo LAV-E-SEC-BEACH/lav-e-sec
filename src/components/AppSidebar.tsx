@@ -1,4 +1,4 @@
-import { WashingMachine, LayoutDashboard, ClipboardList, Users } from "lucide-react";
+import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -10,6 +10,7 @@ const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Ordens de Serviço", icon: ClipboardList },
   { id: "clients", label: "Clientes", icon: Users },
+  { id: "expenses", label: "Despesas", icon: Receipt },
 ];
 
 export function AppSidebar({ currentPage, onNavigate }: Props) {

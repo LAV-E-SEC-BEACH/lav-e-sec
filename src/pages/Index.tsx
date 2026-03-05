@@ -1,24 +1,29 @@
 import { useState, useMemo } from "react";
 import { NewOrderForm, KnownClient } from "@/components/NewOrderForm";
-import { OrderMessages } from "@/components/OrderMessages";
 import { OrdersTable } from "@/components/OrdersTable";
 import { OrderDetailDialog } from "@/components/OrderDetailDialog";
 import { AppSidebar } from "@/components/AppSidebar";
+import { DashboardPage } from "@/components/DashboardPage";
+import { NewExpenseDialog } from "@/components/NewExpenseDialog";
 import { Order, calculateTotal, formatDate, formatCurrency } from "@/lib/laundry";
+import { Expense } from "@/lib/expenses";
+import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Moon, Sun, ChevronRight, UserPlus } from "lucide-react";
+import { Plus, ChevronRight, UserPlus } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
 
 const Index = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("orders");
   const [showForm, setShowForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [showClientDialog, setShowClientDialog] = useState(false);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
 
   const handleNewOrder = (name: string, phone: string, baskets: number) => {
     const order: Order = {
@@ -59,12 +64,20 @@ const Index = () => {
     setClients((prev) => [client, ...prev]);
   };
 
+  const handleAddExpense = (expense: Expense) => {
+    setExpenses((prev) => [expense, ...prev]);
+  };
+
+  const handleDeleteExpense = (id: string) => {
+    setExpenses((prev) => prev.filter((e) => e.id !== id));
+    toast.info("Despesa removida.");
+  };
+
   const handleSelectOrder = (order: Order) => {
     setSelectedOrder(order);
     setDialogOpen(true);
   };
 
-  // Build unique known clients from orders + registered clients
   const knownClients = useMemo<KnownClient[]>(() => {
     const map = new Map<string, KnownClient>();
     orders.forEach((o) => map.set(o.phone, { name: o.name, phone: o.phone }));
@@ -75,19 +88,23 @@ const Index = () => {
   const todayOrders = orders.filter((o) => o.date === formatDate(new Date()));
   const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
+  const breadcrumbLabels: Record<string, string> = {
+    orders: "Ordens de Serviço",
+    dashboard: "Dashboard",
+    clients: "Clientes",
+    expenses: "Despesas",
+  };
+
   return (
     <div className="min-h-screen bg-background flex">
       <AppSidebar currentPage={currentPage} onNavigate={setCurrentPage} />
 
       <div className="flex-1 flex flex-col">
-        {/* Top Bar */}
         <header className="h-14 border-b bg-card flex items-center justify-between px-6">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <span>Home</span>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span>Ordens de Serviço</span>
-            <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-foreground font-medium">Listagem</span>
+            <span className="text-foreground font-medium">{breadcrumbLabels[currentPage]}</span>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="font-['Space_Grotesk'] font-bold px-3 py-1">
@@ -96,54 +113,31 @@ const Index = () => {
           </div>
         </header>
 
-        {/* Page Content */}
         <main className="flex-1 p-6">
           {currentPage === "orders" && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight">📋 Ordens de Serviço</h1>
-                </div>
+                <h1 className="text-2xl font-bold tracking-tight">📋 Ordens de Serviço</h1>
                 <Button onClick={() => setShowForm(!showForm)} className="gap-2">
                   <Plus className="h-4 w-4" />
                   Nova Ordem
                 </Button>
               </div>
-
               {showForm && (
                 <div className="max-w-md">
                   <NewOrderForm onSubmit={handleNewOrder} knownClients={knownClients} />
                 </div>
               )}
-
-              <OrdersTable
-                orders={orders}
-                onSelect={handleSelectOrder}
-                onDelete={handleDelete}
-              />
+              <OrdersTable orders={orders} onSelect={handleSelectOrder} onDelete={handleDelete} />
             </div>
           )}
 
           {currentPage === "dashboard" && (
-            <div className="space-y-5">
-              <h1 className="text-2xl font-bold tracking-tight">📊 Dashboard</h1>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-lg border bg-card p-5">
-                  <p className="text-sm text-muted-foreground">Atendimentos Hoje</p>
-                  <p className="text-3xl font-bold font-['Space_Grotesk'] mt-1">{todayOrders.length}</p>
-                </div>
-                <div className="rounded-lg border bg-card p-5">
-                  <p className="text-sm text-muted-foreground">Faturamento Hoje</p>
-                  <p className="text-3xl font-bold font-['Space_Grotesk'] mt-1 text-primary">{formatCurrency(todayTotal)}</p>
-                </div>
-                <div className="rounded-lg border bg-card p-5">
-                  <p className="text-sm text-muted-foreground">Em Lavagem</p>
-                  <p className="text-3xl font-bold font-['Space_Grotesk'] mt-1 text-warning">
-                    {orders.filter((o) => o.status === "washing").length}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <DashboardPage
+              orders={orders}
+              expenses={expenses}
+              onAddExpense={() => setShowExpenseDialog(true)}
+            />
           )}
 
           {currentPage === "clients" && (
@@ -164,26 +158,64 @@ const Index = () => {
               )}
             </div>
           )}
+
+          {currentPage === "expenses" && (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h1 className="text-2xl font-bold tracking-tight">💰 Despesas</h1>
+                <Button onClick={() => setShowExpenseDialog(true)} className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Nova Despesa
+                </Button>
+              </div>
+              {expenses.length === 0 ? (
+                <p className="text-muted-foreground">Nenhuma despesa registrada ainda.</p>
+              ) : (
+                <div className="rounded-lg border bg-card overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/40">
+                        <th className="text-left p-4 font-medium text-muted-foreground">DATA</th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">DESCRIÇÃO</th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">CATEGORIA</th>
+                        <th className="text-right p-4 font-medium text-muted-foreground">VALOR</th>
+                        <th className="text-center p-4 font-medium text-muted-foreground">AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {expenses.map((e) => (
+                        <tr key={e.id} className="border-b hover:bg-muted/30">
+                          <td className="p-4">{e.date}</td>
+                          <td className="p-4 font-medium">{e.description}</td>
+                          <td className="p-4">
+                            <Badge variant="secondary">{CATEGORY_LABELS[e.category]}</Badge>
+                          </td>
+                          <td className="p-4 text-right font-['Space_Grotesk'] font-medium text-destructive">
+                            {formatCurrency(e.amount)}
+                          </td>
+                          <td className="p-4 text-center">
+                            <Button variant="ghost" size="sm" onClick={() => handleDeleteExpense(e.id)} className="text-destructive hover:text-destructive">
+                              Remover
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
 
-      <NewClientDialog
-        open={showClientDialog}
-        onClose={() => setShowClientDialog(false)}
-        onSubmit={handleAddClient}
-      />
-
-      <OrderDetailDialog
-        order={selectedOrder}
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        onStatusChange={handleStatusChange}
-      />
+      <NewClientDialog open={showClientDialog} onClose={() => setShowClientDialog(false)} onSubmit={handleAddClient} />
+      <NewExpenseDialog open={showExpenseDialog} onClose={() => setShowExpenseDialog(false)} onSubmit={handleAddExpense} />
+      <OrderDetailDialog order={selectedOrder} open={dialogOpen} onClose={() => setDialogOpen(false)} onStatusChange={handleStatusChange} />
     </div>
   );
 };
 
-// Clients table merging registered clients + order-derived clients
 function ClientsTable({ clients, orders }: { clients: Client[]; orders: Order[] }) {
   const fromOrders = orders.reduce<Record<string, { name: string; phone: string; totalOrders: number; totalSpent: number }>>((acc, o) => {
     const key = o.phone;
@@ -193,7 +225,6 @@ function ClientsTable({ clients, orders }: { clients: Client[]; orders: Order[] 
     return acc;
   }, {});
 
-  // Merge standalone clients
   clients.forEach((c) => {
     if (!fromOrders[c.phone]) {
       fromOrders[c.phone] = { name: c.name, phone: c.phone, totalOrders: 0, totalSpent: 0 };
