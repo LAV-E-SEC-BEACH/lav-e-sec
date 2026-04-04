@@ -1,5 +1,6 @@
-import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt } from "lucide-react";
+import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Props {
   currentPage: string;
