@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { NewOrderForm, KnownClient } from "@/components/NewOrderForm";
 import { OrdersTable } from "@/components/OrdersTable";
 import { OrderDetailDialog } from "@/components/OrderDetailDialog";
@@ -13,8 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index = () => {
+  const { user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -25,16 +28,72 @@ const Index = () => {
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
 
-  const handleNewOrder = (name: string, phone: string, baskets: number) => {
-    const order: Order = {
-      id: crypto.randomUUID(),
-      date: formatDate(new Date()),
+  // Load data from database
+  const loadData = useCallback(async () => {
+    if (!user) return;
+
+    const [ordersRes, clientsRes, expensesRes] = await Promise.all([
+      supabase.from("orders").select("*").order("created_at", { ascending: false }),
+      supabase.from("clients").select("*").order("created_at", { ascending: false }),
+      supabase.from("expenses").select("*").order("created_at", { ascending: false }),
+    ]);
+
+    if (ordersRes.data) {
+      setOrders(ordersRes.data.map((o: any) => ({
+        id: o.id,
+        date: o.date,
+        name: o.name,
+        phone: o.phone,
+        baskets: o.baskets,
+        total: Number(o.total),
+        status: o.status as Order["status"],
+      })));
+    }
+
+    if (clientsRes.data) {
+      setClients(clientsRes.data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+      })));
+    }
+
+    if (expensesRes.data) {
+      setExpenses(expensesRes.data.map((e: any) => ({
+        id: e.id,
+        date: e.date,
+        description: e.description,
+        category: e.category,
+        amount: Number(e.amount),
+      })));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleNewOrder = async (name: string, phone: string, baskets: number) => {
+    if (!user) return;
+    const total = calculateTotal(baskets);
+    const date = formatDate(new Date());
+
+    const { data, error } = await supabase.from("orders").insert({
+      user_id: user.id,
       name,
       phone,
       baskets,
-      total: calculateTotal(baskets),
+      total,
       status: "washing",
-    };
+      date,
+    }).select().single();
+
+    if (error) {
+      toast.error("Erro ao salvar atendimento.");
+      return;
+    }
+
+    const order: Order = { id: data.id, date, name, phone, baskets, total, status: "washing" };
     setOrders((prev) => [order, ...prev]);
     setSelectedOrder(order);
     setDialogOpen(true);
@@ -42,33 +101,60 @@ const Index = () => {
     toast.success("Atendimento registrado com sucesso!");
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    if (error) { toast.error("Erro ao remover."); return; }
     setOrders((prev) => prev.filter((o) => o.id !== id));
-    if (selectedOrder?.id === id) {
-      setSelectedOrder(null);
-      setDialogOpen(false);
-    }
+    if (selectedOrder?.id === id) { setSelectedOrder(null); setDialogOpen(false); }
     toast.info("Atendimento removido.");
   };
 
-  const handleStatusChange = (id: string, status: Order["status"]) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status } : o))
-    );
+  const handleStatusChange = async (id: string, status: Order["status"]) => {
+    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+    if (error) { toast.error("Erro ao alterar status."); return; }
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, status } : o)));
     setSelectedOrder((prev) => (prev?.id === id ? { ...prev, status } : prev));
     const labels = { washing: "Em Lavagem", ready: "Pronto", picked_up: "Finalizado" };
     toast.success(`Status alterado para: ${labels[status]}`);
   };
 
-  const handleAddClient = (client: Client) => {
-    setClients((prev) => [client, ...prev]);
+  const handleAddClient = async (client: Client) => {
+    if (!user) return;
+    const { data, error } = await supabase.from("clients").insert({
+      user_id: user.id,
+      name: client.name,
+      phone: client.phone,
+    }).select().single();
+
+    if (error) { toast.error("Erro ao cadastrar cliente."); return; }
+    setClients((prev) => [{ id: data.id, name: data.name, phone: data.phone }, ...prev]);
+    toast.success("Cliente cadastrado com sucesso!");
   };
 
-  const handleAddExpense = (expense: Expense) => {
-    setExpenses((prev) => [expense, ...prev]);
+  const handleAddExpense = async (expense: Expense) => {
+    if (!user) return;
+    const { data, error } = await supabase.from("expenses").insert({
+      user_id: user.id,
+      description: expense.description,
+      category: expense.category,
+      amount: expense.amount,
+      date: expense.date,
+    }).select().single();
+
+    if (error) { toast.error("Erro ao registrar despesa."); return; }
+    setExpenses((prev) => [{
+      id: data.id,
+      date: data.date,
+      description: data.description,
+      category: data.category as Expense["category"],
+      amount: Number(data.amount),
+    }, ...prev]);
+    toast.success("Despesa registrada com sucesso!");
   };
 
-  const handleDeleteExpense = (id: string) => {
+  const handleDeleteExpense = async (id: string) => {
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) { toast.error("Erro ao remover despesa."); return; }
     setExpenses((prev) => prev.filter((e) => e.id !== id));
     toast.info("Despesa removida.");
   };
