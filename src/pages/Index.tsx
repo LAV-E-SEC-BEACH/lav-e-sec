@@ -146,7 +146,7 @@ const Index = () => {
       id: data.id,
       date: data.date,
       description: data.description,
-      category: data.category,
+      category: data.category as Expense["category"],
       amount: Number(data.amount),
     }, ...prev]);
     toast.success("Despesa registrada com sucesso!");
