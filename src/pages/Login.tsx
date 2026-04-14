@@ -84,6 +84,7 @@ const Login = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  maxLength={100}
                 />
               </div>
             )}
@@ -96,6 +97,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                maxLength={255}
               />
             </div>
             <div className="space-y-2">
