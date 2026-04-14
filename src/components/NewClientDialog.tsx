@@ -10,6 +10,7 @@ export interface Client {
   id: string;
   name: string;
   phone: string;
+  address: string;
 }
 
 interface Props {
@@ -21,6 +22,7 @@ interface Props {
 export function NewClientDialog({ open, onClose, onSubmit }: Props) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
 
   const canSubmit = name.trim().length > 0 && phone.trim().length > 0;
 
@@ -31,11 +33,12 @@ export function NewClientDialog({ open, onClose, onSubmit }: Props) {
       id: crypto.randomUUID(),
       name: name.trim(),
       phone: phone.trim(),
+      address: address.trim(),
     });
     setName("");
     setPhone("");
+    setAddress("");
     onClose();
-    toast.success("Cliente cadastrado com sucesso!");
   };
 
   return (
@@ -50,31 +53,19 @@ export function NewClientDialog({ open, onClose, onSubmit }: Props) {
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="space-y-2">
             <Label htmlFor="client-name">Nome do Cliente *</Label>
-            <Input
-              id="client-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: João Silva"
-              required
-            />
+            <Input id="client-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: João Silva" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="client-phone">Telefone (WhatsApp) *</Label>
-            <Input
-              id="client-phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Ex: 11999998888"
-              required
-            />
+            <Input id="client-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ex: 11999998888" required />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="client-address">Endereço</Label>
+            <Input id="client-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Ex: Rua das Flores, 123" />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={!canSubmit}>
-              Cadastrar
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={!canSubmit}>Cadastrar</Button>
           </div>
         </form>
       </DialogContent>

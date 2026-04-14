@@ -9,7 +9,7 @@ import { Trash2, Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lu
 interface Props {
   orders: Order[];
   onSelect: (order: Order) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const statusConfig: Record<Order["status"], { label: string; className: string }> = {
@@ -97,14 +97,16 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
                 <span className="text-muted-foreground">{order.date}</span>
                 <div className="flex items-center gap-2">
                   <Badge className={payment.className} variant="secondary">{payment.label}</Badge>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
+                  {onDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -155,14 +157,16 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {onDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               );
