@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings } from "lucide-react";
+import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileDialog } from "./ProfileDialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   currentPage: string;
@@ -16,55 +19,86 @@ const navItems = [
   { id: "expenses", label: "Despesas", icon: Receipt },
 ];
 
-export function AppSidebar({ currentPage, onNavigate }: Props) {
+function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onItemClick?: () => void }) {
   const { signOut, user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
 
+  const handleNav = (page: string) => {
+    onNavigate(page);
+    onItemClick?.();
+  };
+
   return (
     <>
-      <aside className="w-60 min-h-screen bg-primary text-primary-foreground flex flex-col">
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-primary-foreground/10">
-          <WashingMachine className="h-7 w-7" />
-          <span className="text-lg font-bold tracking-tight font-['Space_Grotesk']">
-            LAV & SEC BEACH
-          </span>
-        </div>
-        <nav className="flex-1 py-4 px-3 space-y-1">
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onNavigate(item.id)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
-                currentPage === item.id
-                  ? "bg-primary-foreground/20 text-primary-foreground"
-                  : "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-              )}
-            >
-              <item.icon className="h-4.5 w-4.5" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="px-3 pb-4 border-t border-primary-foreground/10 pt-3 space-y-2">
-          <p className="text-xs text-primary-foreground/60 px-3 truncate">{user?.email}</p>
+      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-primary-foreground/10">
+        <WashingMachine className="h-7 w-7" />
+        <span className="text-lg font-bold tracking-tight font-['Space_Grotesk']">
+          LAV & SEC BEACH
+        </span>
+      </div>
+      <nav className="flex-1 py-4 px-3 space-y-1">
+        {navItems.map((item) => (
           <button
-            onClick={() => setProfileOpen(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors text-left"
+            key={item.id}
+            onClick={() => handleNav(item.id)}
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left",
+              currentPage === item.id
+                ? "bg-primary-foreground/20 text-primary-foreground"
+                : "text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            )}
           >
-            <Settings className="h-4.5 w-4.5" />
-            Editar Perfil
+            <item.icon className="h-4.5 w-4.5" />
+            {item.label}
           </button>
-          <button
-            onClick={signOut}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors text-left"
-          >
-            <LogOut className="h-4.5 w-4.5" />
-            Sair
-          </button>
-        </div>
-      </aside>
+        ))}
+      </nav>
+      <div className="px-3 pb-4 border-t border-primary-foreground/10 pt-3 space-y-2">
+        <p className="text-xs text-primary-foreground/60 px-3 truncate">{user?.email}</p>
+        <button
+          onClick={() => setProfileOpen(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors text-left"
+        >
+          <Settings className="h-4.5 w-4.5" />
+          Editar Perfil
+        </button>
+        <button
+          onClick={signOut}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary-foreground/70 hover:bg-primary-foreground/10 hover:text-primary-foreground transition-colors text-left"
+        >
+          <LogOut className="h-4.5 w-4.5" />
+          Sair
+        </button>
+      </div>
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </>
+  );
+}
+
+export function AppSidebar({ currentPage, onNavigate }: Props) {
+  const isMobile = useIsMobile();
+  const [open, setOpen] = useState(false);
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="fixed top-3 left-3 z-50 md:hidden">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-60 p-0 bg-primary text-primary-foreground border-none">
+          <div className="flex flex-col h-full">
+            <SidebarContent currentPage={currentPage} onNavigate={onNavigate} onItemClick={() => setOpen(false)} />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <aside className="w-60 min-h-screen bg-primary text-primary-foreground flex flex-col">
+      <SidebarContent currentPage={currentPage} onNavigate={onNavigate} />
+    </aside>
   );
 }
