@@ -147,7 +147,7 @@ const Index = () => {
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="font-['Space_Grotesk'] font-bold px-2 md:px-3 py-1 text-xs md:text-sm">
-              Hoje: {todayOrders.length} · {formatCurrency(todayTotal)}
+              {new Date().toLocaleDateString("pt-BR")} · {formatCurrency(todayTotal)}
             </Badge>
           </div>
         </header>
