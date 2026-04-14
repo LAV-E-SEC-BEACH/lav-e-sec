@@ -20,17 +20,32 @@ const Login = () => {
   if (authLoading) return null;
   if (session) return <Navigate to="/" replace />;
 
+  const validateInputs = () => {
+    const trimmedEmail = email.trim();
+    if (isSignUp && name.trim().length < 2) {
+      toast.error("Nome deve ter pelo menos 2 caracteres."); return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      toast.error("Email inválido."); return false;
+    }
+    if (password.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres."); return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateInputs()) return;
     setLoading(true);
 
     if (isSignUp) {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           emailRedirectTo: window.location.origin,
-          data: { display_name: name },
+          data: { display_name: name.trim() },
         },
       });
       if (error) {
@@ -39,7 +54,7 @@ const Login = () => {
         toast.success("Conta criada! Verifique seu email para confirmar.");
       }
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) {
         toast.error("Email ou senha incorretos.");
       }
@@ -69,6 +84,7 @@ const Login = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
+                  maxLength={100}
                 />
               </div>
             )}
@@ -81,6 +97,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                maxLength={255}
               />
             </div>
             <div className="space-y-2">
