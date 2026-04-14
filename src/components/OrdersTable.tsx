@@ -9,7 +9,7 @@ import { Trash2, Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lu
 interface Props {
   orders: Order[];
   onSelect: (order: Order) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const statusConfig: Record<Order["status"], { label: string; className: string }> = {
