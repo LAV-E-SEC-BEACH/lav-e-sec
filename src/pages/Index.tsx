@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
+import { SupportChatBot } from "@/components/SupportChatBot";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -265,6 +266,7 @@ const Index = () => {
       <NewClientDialog open={showClientDialog} onClose={() => setShowClientDialog(false)} onSubmit={handleAddClient} />
       <NewExpenseDialog open={showExpenseDialog} onClose={() => setShowExpenseDialog(false)} onSubmit={handleAddExpense} />
       <OrderDetailDialog order={selectedOrder} open={dialogOpen} onClose={() => setDialogOpen(false)} onStatusChange={handleStatusChange} />
+      <SupportChatBot />
     </div>
   );
 };
