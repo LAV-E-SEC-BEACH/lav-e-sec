@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
+import { SupportChatBot } from "@/components/SupportChatBot";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
