@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 interface ProfileDialogProps {
   open: boolean;
@@ -20,9 +21,17 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
   useEffect(() => {
     if (open && user) {
       setEmail(user.email ?? "");
+      setNewPassword("");
+      setConfirmPassword("");
       loadProfile();
     }
   }, [open, user]);
@@ -45,7 +54,6 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     if (!user) return;
     setLoading(true);
 
-    // Update profile table
     const { error: profileError } = await supabase
       .from("profiles")
       .upsert({ user_id: user.id, display_name: displayName, phone }, { onConflict: "user_id" });
@@ -56,7 +64,6 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
       return;
     }
 
-    // Update email if changed
     if (email !== user.email) {
       const { error: emailError } = await supabase.auth.updateUser({ email });
       if (emailError) {
@@ -72,9 +79,35 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
     onOpenChange(false);
   };
 
+  const handleChangePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error("Preencha os campos de senha.");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("A senha deve ter pelo menos 6 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("As senhas não coincidem.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast.error("Erro ao alterar senha: " + error.message);
+    } else {
+      toast.success("Senha alterada com sucesso!");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+    setPasswordLoading(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
         </DialogHeader>
@@ -109,7 +142,53 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
           </div>
           <Button onClick={handleSave} className="w-full" disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Salvar
+            Salvar Perfil
+          </Button>
+
+          <Separator />
+
+          <p className="text-sm font-medium">Alterar Senha</p>
+          <div className="space-y-2">
+            <Label htmlFor="new-password">Nova Senha</Label>
+            <div className="relative">
+              <Input
+                id="new-password"
+                type={showNewPassword ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              >
+                {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirmar Senha</Label>
+            <div className="relative">
+              <Input
+                id="confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repita a nova senha"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
+          <Button onClick={handleChangePassword} variant="outline" className="w-full" disabled={passwordLoading}>
+            {passwordLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+            Alterar Senha
           </Button>
         </div>
       </DialogContent>
