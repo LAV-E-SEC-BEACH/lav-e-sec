@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileDialog } from "./ProfileDialog";
+import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,7 +25,7 @@ function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onIt
   const [profileOpen, setProfileOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
 
-  useState(() => {
+  useEffect(() => {
     if (user) {
       supabase
         .from("profiles")
@@ -35,7 +36,7 @@ function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onIt
           if (data?.display_name) setDisplayName(data.display_name);
         });
     }
-  });
+  }, [user, profileOpen]);
 
   const handleNav = (page: string) => {
     onNavigate(page);
