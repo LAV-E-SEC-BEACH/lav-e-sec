@@ -260,6 +260,8 @@ const Index = () => {
               )}
             </div>
           )}
+
+          {currentPage === "support" && <SupportTicketsPage />}
         </main>
       </div>
 
