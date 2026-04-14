@@ -132,7 +132,7 @@ const Index = () => {
   const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
   const breadcrumbLabels: Record<string, string> = {
-    orders: "Ordens de Serviço", dashboard: "Dashboard", clients: "Clientes", expenses: "Despesas",
+    orders: "Ordens de Serviço", dashboard: "Dashboard", clients: "Clientes", expenses: "Despesas", support: "Suporte",
   };
 
   return (
