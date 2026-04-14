@@ -266,6 +266,7 @@ const Index = () => {
       <NewClientDialog open={showClientDialog} onClose={() => setShowClientDialog(false)} onSubmit={handleAddClient} />
       <NewExpenseDialog open={showExpenseDialog} onClose={() => setShowExpenseDialog(false)} onSubmit={handleAddExpense} />
       <OrderDetailDialog order={selectedOrder} open={dialogOpen} onClose={() => setDialogOpen(false)} onStatusChange={handleStatusChange} />
+      <SupportChatBot />
     </div>
   );
 };
