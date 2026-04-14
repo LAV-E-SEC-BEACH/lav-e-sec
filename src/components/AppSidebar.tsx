@@ -22,6 +22,20 @@ const navItems = [
 function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onItemClick?: () => void }) {
   const { signOut, user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+
+  useState(() => {
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.display_name) setDisplayName(data.display_name);
+        });
+    }
+  });
 
   const handleNav = (page: string) => {
     onNavigate(page);
@@ -54,6 +68,7 @@ function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onIt
         ))}
       </nav>
       <div className="px-3 pb-4 border-t border-primary-foreground/10 pt-3 space-y-2">
+        <p className="text-sm font-medium text-primary-foreground px-3 truncate">{displayName || user?.user_metadata?.full_name || "Usuário"}</p>
         <p className="text-xs text-primary-foreground/60 px-3 truncate">{user?.email}</p>
         <button
           onClick={() => setProfileOpen(true)}
