@@ -26,7 +26,7 @@ export function AppSidebar({ currentPage, onNavigate }: Props) {
         <div className="flex items-center gap-2.5 px-5 py-5 border-b border-primary-foreground/10">
           <WashingMachine className="h-7 w-7" />
           <span className="text-lg font-bold tracking-tight font-['Space_Grotesk']">
-            LAV & SEV BEACH
+            LAV & SEC BEACH
           </span>
         </div>
         <nav className="flex-1 py-4 px-3 space-y-1">
