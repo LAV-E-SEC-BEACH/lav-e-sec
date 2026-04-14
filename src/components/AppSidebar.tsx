@@ -18,6 +18,7 @@ const navItems = [
   { id: "orders", label: "Ordens de Serviço", icon: ClipboardList },
   { id: "clients", label: "Clientes", icon: Users },
   { id: "expenses", label: "Despesas", icon: Receipt },
+  { id: "support", label: "Suporte", icon: Headset },
 ];
 
 function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onItemClick?: () => void }) {
