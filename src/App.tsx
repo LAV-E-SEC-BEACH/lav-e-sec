@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import SupportLogin from "./pages/SupportLogin";
+import SupportDashboard from "./pages/SupportDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,15 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/suporte-cadastro" element={<SupportLogin />} />
+            <Route
+              path="/suporte"
+              element={
+                <ProtectedRoute>
+                  <SupportDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/"
               element={
