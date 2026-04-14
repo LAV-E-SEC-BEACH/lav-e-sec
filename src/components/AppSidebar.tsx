@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu } from "lucide-react";
+import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileDialog } from "./ProfileDialog";
