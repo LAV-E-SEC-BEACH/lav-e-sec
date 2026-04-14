@@ -132,7 +132,7 @@ const Index = () => {
   const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
   const breadcrumbLabels: Record<string, string> = {
-    orders: "Ordens de Serviço", dashboard: "Dashboard", clients: "Clientes", expenses: "Despesas",
+    orders: "Ordens de Serviço", dashboard: "Dashboard", clients: "Clientes", expenses: "Despesas", support: "Suporte",
   };
 
   return (
@@ -260,6 +260,8 @@ const Index = () => {
               )}
             </div>
           )}
+
+          {currentPage === "support" && <SupportTicketsPage />}
         </main>
       </div>
 
@@ -321,6 +323,73 @@ function ClientsTable({ clients, orders }: { clients: Client[]; orders: Order[] 
         </tbody>
       </table>
     </>
+  );
+}
+
+function SupportTicketsPage() {
+  const { user } = useAuth();
+  const [tickets, setTickets] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("support_tickets")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setTickets(data);
+      });
+  }, [user]);
+
+  const statusColor = (s: string) =>
+    s === "aberto" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800";
+
+  return (
+    <div className="space-y-5">
+      <h1 className="text-xl md:text-2xl font-bold tracking-tight">🎧 Chamados de Suporte</h1>
+      {tickets.length === 0 ? (
+        <p className="text-muted-foreground">Nenhum chamado registrado. Use o botão de chat no canto inferior direito para abrir um chamado.</p>
+      ) : (
+        <>
+          <div className="space-y-3 md:hidden">
+            {tickets.map((t) => (
+              <div key={t.id} className="rounded-lg border bg-card p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-sm">{t.summary}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor(t.status)}`}>{t.status}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">{t.description}</p>
+                <p className="text-xs text-muted-foreground">{new Date(t.created_at).toLocaleString("pt-BR")}</p>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-lg border bg-card overflow-hidden hidden md:block">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/40">
+                  <th className="text-left p-4 font-medium text-muted-foreground">DATA</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">RESUMO</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">DESCRIÇÃO</th>
+                  <th className="text-center p-4 font-medium text-muted-foreground">STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map((t) => (
+                  <tr key={t.id} className="border-b hover:bg-muted/30">
+                    <td className="p-4 whitespace-nowrap">{new Date(t.created_at).toLocaleString("pt-BR")}</td>
+                    <td className="p-4 font-medium">{t.summary}</td>
+                    <td className="p-4 text-muted-foreground max-w-xs truncate">{t.description}</td>
+                    <td className="p-4 text-center">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColor(t.status)}`}>{t.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </div>
   );
 }
 

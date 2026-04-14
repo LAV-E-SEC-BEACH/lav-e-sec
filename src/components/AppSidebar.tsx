@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu } from "lucide-react";
+import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileDialog } from "./ProfileDialog";
@@ -18,6 +18,7 @@ const navItems = [
   { id: "orders", label: "Ordens de Serviço", icon: ClipboardList },
   { id: "clients", label: "Clientes", icon: Users },
   { id: "expenses", label: "Despesas", icon: Receipt },
+  { id: "support", label: "Suporte", icon: Headset },
 ];
 
 function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onItemClick?: () => void }) {
