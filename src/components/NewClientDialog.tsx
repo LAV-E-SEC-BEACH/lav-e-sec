@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { UserPlus, Search, Loader2 } from "lucide-react";
+import { UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export interface Client {
@@ -13,45 +13,57 @@ export interface Client {
   address: string;
 }
 
-interface Props {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (client: Client) => void;
+interface ViaCepData {
+  logradouro: string;
+  bairro: string;
+  localidade: string;
+  uf: string;
+  erro?: boolean;
 }
 
-async function fetchAddressByCep(cep: string) {
+async function fetchAddressByCep(cep: string): Promise<ViaCepData> {
   const cleaned = cep.replace(/\D/g, "");
   if (cleaned.length !== 8) throw new Error("CEP inválido");
   const res = await fetch(`https://viacep.com.br/ws/${cleaned}/json/`);
   const data = await res.json();
   if (data.erro) throw new Error("CEP não encontrado");
-  return `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
+  return data;
 }
 
-export function NewClientDialog({ open, onClose, onSubmit }: Props) {
+export function NewClientDialog({ open, onClose, onSubmit }: { open: boolean; onClose: () => void; onSubmit: (client: Client) => void }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [cep, setCep] = useState("");
-  const [address, setAddress] = useState("");
+  const [street, setStreet] = useState("");
+  const [number, setNumber] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
+  const [city, setCity] = useState("");
   const [loadingCep, setLoadingCep] = useState(false);
 
   const canSubmit = name.trim().length > 0 && phone.trim().length > 0;
 
-  const handleCepSearch = async () => {
-    if (cep.replace(/\D/g, "").length !== 8) {
-      toast.error("Digite um CEP válido com 8 dígitos");
-      return;
+  const handleCepChange = async (value: string) => {
+    setCep(value);
+    const cleaned = value.replace(/\D/g, "");
+    if (cleaned.length === 8) {
+      setLoadingCep(true);
+      try {
+        const data = await fetchAddressByCep(cleaned);
+        setStreet(data.logradouro || "");
+        setNeighborhood(data.bairro || "");
+        setCity(`${data.localidade} - ${data.uf}`);
+        toast.success("Endereço encontrado!");
+      } catch {
+        toast.error("CEP não encontrado.");
+      } finally {
+        setLoadingCep(false);
+      }
     }
-    setLoadingCep(true);
-    try {
-      const addr = await fetchAddressByCep(cep);
-      setAddress(addr);
-      toast.success("Endereço encontrado!");
-    } catch {
-      toast.error("CEP não encontrado. Preencha manualmente.");
-    } finally {
-      setLoadingCep(false);
-    }
+  };
+
+  const buildAddress = () => {
+    const parts = [street, number ? `Nº ${number}` : "", neighborhood, city].filter(Boolean);
+    return parts.join(", ");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,12 +73,9 @@ export function NewClientDialog({ open, onClose, onSubmit }: Props) {
       id: crypto.randomUUID(),
       name: name.trim(),
       phone: phone.trim(),
-      address: address.trim(),
+      address: buildAddress(),
     });
-    setName("");
-    setPhone("");
-    setCep("");
-    setAddress("");
+    setName(""); setPhone(""); setCep(""); setStreet(""); setNumber(""); setNeighborhood(""); setCity("");
     onClose();
   };
 
@@ -90,22 +99,30 @@ export function NewClientDialog({ open, onClose, onSubmit }: Props) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="client-cep">CEP</Label>
-            <div className="flex gap-2">
-              <Input
-                id="client-cep"
-                value={cep}
-                onChange={(e) => setCep(e.target.value)}
-                placeholder="Ex: 01001000"
-                maxLength={9}
-              />
-              <Button type="button" variant="outline" size="icon" onClick={handleCepSearch} disabled={loadingCep}>
-                {loadingCep ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </Button>
+            <div className="relative">
+              <Input id="client-cep" value={cep} onChange={(e) => handleCepChange(e.target.value)} placeholder="Ex: 01001000" maxLength={9} />
+              {loadingCep && <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-muted-foreground" />}
             </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="client-address">Endereço</Label>
-            <Input id="client-address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Ex: Rua das Flores, 123" />
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="client-street">Rua</Label>
+              <Input id="client-street" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua das Flores" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-number">Número</Label>
+              <Input id="client-number" value={number} onChange={(e) => setNumber(e.target.value)} placeholder="123" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-2">
+              <Label htmlFor="client-neighborhood">Bairro</Label>
+              <Input id="client-neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Centro" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client-city">Cidade/UF</Label>
+              <Input id="client-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="São Paulo - SP" />
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
