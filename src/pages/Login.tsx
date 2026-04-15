@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const Login = () => {
   const { session, loading: authLoading } = useAuth();
