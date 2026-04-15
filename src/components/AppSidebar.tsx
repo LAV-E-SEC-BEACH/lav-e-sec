@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { WashingMachine, LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset } from "lucide-react";
+import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { ProfileDialog } from "./ProfileDialog";
@@ -46,8 +47,8 @@ function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onIt
 
   return (
     <>
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-primary-foreground/10">
-        <WashingMachine className="h-7 w-7" />
+      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-primary-foreground/10">
+        <img src={logo} alt="LAV & SEC Beach" className="h-10 w-10 object-contain" />
         <span className="text-lg font-bold tracking-tight font-['Space_Grotesk']">
           LAV & SEC BEACH
         </span>
