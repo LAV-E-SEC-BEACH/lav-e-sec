@@ -68,7 +68,10 @@ const Login = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">🧺 LAV & SEC BEACH</CardTitle>
+          <div className="flex justify-center mb-2">
+            <img src={logo} alt="LAV & SEC Beach" className="h-24 w-24 object-contain" />
+          </div>
+          <CardTitle className="text-2xl font-bold">LAV & SEC BEACH</CardTitle>
           <CardDescription>
             {isSignUp ? "Crie sua conta para começar" : "Entre para acessar o sistema"}
           </CardDescription>
