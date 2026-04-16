@@ -21,17 +21,22 @@ import { useUserRole } from "@/hooks/useUserRole";
 
 const Index = () => {
   const { user } = useAuth();
-  const { role } = useUserRole();
+  const { role, loading: roleLoading } = useUserRole();
   const [orders, setOrders] = useState<Order[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState("orders");
+  const [currentPage, setCurrentPage] = useState(() => "orders");
   const [showForm, setShowForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+
+  // Support users should only see support page
+  useEffect(() => {
+    if (role === "support") setCurrentPage("support");
+  }, [role]);
 
   const canDelete = role === "admin";
 
