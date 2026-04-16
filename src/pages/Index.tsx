@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus, Pencil, Download } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
 import { SupportChatBot } from "@/components/SupportChatBot";
+import { ClientUpload } from "@/components/ClientUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
