@@ -157,11 +157,11 @@ const Index = () => {
       <AppSidebar currentPage={currentPage} onNavigate={setCurrentPage} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b bg-card flex items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground pl-10 md:pl-0">
+        <header className="h-14 border-b flex items-center justify-between px-4 md:px-6" style={{ background: 'hsl(180, 30%, 18%)' }}>
+          <div className="flex items-center gap-2 text-sm pl-10 md:pl-0" style={{ color: 'hsl(0, 0%, 75%)' }}>
             <span>Home</span>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-foreground font-medium">{breadcrumbLabels[currentPage]}</span>
+            <span className="font-medium" style={{ color: 'hsl(0, 0%, 95%)' }}>{breadcrumbLabels[currentPage]}</span>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="font-['Space_Grotesk'] font-bold px-2 md:px-3 py-1 text-xs md:text-sm">
