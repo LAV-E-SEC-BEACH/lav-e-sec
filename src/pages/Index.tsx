@@ -191,7 +191,7 @@ const Index = () => {
           )}
 
           {currentPage === "dashboard" && (
-            <DashboardPage orders={orders} expenses={expenses} onAddExpense={() => setShowExpenseDialog(true)} />
+            <DashboardPage orders={orders} expenses={expenses} />
           )}
 
           {currentPage === "clients" && (
