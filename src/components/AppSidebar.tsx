@@ -8,13 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Props {
   currentPage: string;
   onNavigate: (page: string) => void;
 }
 
-const navItems = [
+const allNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "orders", label: "Ordens de Serviço", icon: ClipboardList },
   { id: "clients", label: "Clientes", icon: Users },
@@ -24,8 +25,13 @@ const navItems = [
 
 function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onItemClick?: () => void }) {
   const { signOut, user } = useAuth();
+  const { role } = useUserRole();
   const [profileOpen, setProfileOpen] = useState(false);
   const [displayName, setDisplayName] = useState("");
+
+  const navItems = role === "support"
+    ? allNavItems.filter((item) => item.id === "support")
+    : allNavItems;
 
   useEffect(() => {
     if (user) {
