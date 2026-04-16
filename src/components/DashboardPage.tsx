@@ -1,22 +1,22 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Order, formatCurrency, formatDate } from "@/lib/laundry";
 import { Expense, CATEGORY_LABELS, CATEGORY_COLORS, ExpenseCategory } from "@/lib/expenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, TrendingUp, TrendingDown, DollarSign, ShoppingBasket } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, ShoppingBasket, Download } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
+import { toast } from "sonner";
 
 interface Props {
   orders: Order[];
   expenses: Expense[];
-  onAddExpense: () => void;
 }
 
-export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
+export function DashboardPage({ orders, expenses }: Props) {
   const today = formatDate(new Date());
   const todayOrders = orders.filter((o) => o.date === today);
   const todayRevenue = todayOrders.reduce((s, o) => s + o.total, 0);
@@ -24,6 +24,55 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
   const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
   const profit = totalRevenue - totalExpenses;
+
+  const [exportFrom, setExportFrom] = useState("");
+  const [exportTo, setExportTo] = useState("");
+
+  const handleExportDashboard = () => {
+    const filteredOrders = orders.filter((o) => {
+      if (exportFrom && o.date < exportFrom) return false;
+      if (exportTo && o.date > exportTo) return false;
+      return true;
+    });
+    const filteredExpenses = expenses.filter((e) => {
+      if (exportFrom && e.date < exportFrom) return false;
+      if (exportTo && e.date > exportTo) return false;
+      return true;
+    });
+
+    const totalRev = filteredOrders.reduce((s, o) => s + o.total, 0);
+    const totalExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
+    const totalProfit = totalRev - totalExp;
+
+    const rows: string[][] = [];
+    rows.push(["Atendimentos (datas/hora)", "Receita (valores)", "Despesas (valores)", "Lucro Total (valores)"]);
+
+    const maxLen = Math.max(filteredOrders.length, filteredExpenses.length, 1);
+    for (let i = 0; i < maxLen; i++) {
+      const order = filteredOrders[i];
+      const expense = filteredExpenses[i];
+      rows.push([
+        order ? `${order.date} - ${order.name}` : "",
+        order ? formatCurrency(order.total) : "",
+        expense ? `${expense.date} - ${expense.description}: ${formatCurrency(expense.amount)}` : "",
+        i === 0 ? formatCurrency(totalProfit) : "",
+      ]);
+    }
+
+    // Summary row
+    rows.push([]);
+    rows.push(["TOTAL", formatCurrency(totalRev), formatCurrency(totalExp), formatCurrency(totalProfit)]);
+
+    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `dashboard_${exportFrom || "inicio"}_${exportTo || "fim"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Planilha do dashboard exportada!");
+  };
 
   // Revenue by day (last 7 unique dates)
   const revenueByDay = useMemo(() => {
@@ -44,7 +93,6 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
       .slice(-7);
   }, [orders, expenses]);
 
-  // Status pie chart
   const statusData = useMemo(() => {
     const counts = { washing: 0, ready: 0, picked_up: 0 };
     orders.forEach((o) => counts[o.status]++);
@@ -55,7 +103,6 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
     ].filter((d) => d.value > 0);
   }, [orders]);
 
-  // Expenses by category
   const expensesByCategory = useMemo(() => {
     const map = new Map<ExpenseCategory, number>();
     expenses.forEach((e) => {
@@ -70,12 +117,24 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">📊 Dashboard</h1>
-        <Button onClick={onAddExpense} variant="outline" className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova Despesa
-        </Button>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Data Início</label>
+            <input type="date" value={exportFrom} onChange={(e) => setExportFrom(e.target.value)}
+              className="border rounded-md px-3 py-1.5 text-sm bg-background" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Data Fim</label>
+            <input type="date" value={exportTo} onChange={(e) => setExportTo(e.target.value)}
+              className="border rounded-md px-3 py-1.5 text-sm bg-background" />
+          </div>
+          <Button onClick={handleExportDashboard} variant="outline" className="gap-2" size="sm">
+            <Download className="h-4 w-4" />
+            Exportar Planilha
+          </Button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -122,11 +181,8 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Revenue vs Expenses Bar Chart */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Receita vs Despesas</CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Receita vs Despesas</CardTitle></CardHeader>
           <CardContent>
             {revenueByDay.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Sem dados ainda</p>
@@ -136,15 +192,7 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(value: number) => formatCurrency(value)} />
                   <Bar dataKey="receita" name="Receita" fill="hsl(170, 60%, 42%)" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="despesas" name="Despesas" fill="hsl(0, 72%, 55%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
@@ -152,12 +200,8 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
             )}
           </CardContent>
         </Card>
-
-        {/* Order Status Pie */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Status das Ordens</CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Status das Ordens</CardTitle></CardHeader>
           <CardContent>
             {statusData.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Sem ordens registradas</p>
@@ -165,9 +209,7 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${name}: ${value}`}>
-                    {statusData.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
-                    ))}
+                    {statusData.map((d, i) => (<Cell key={i} fill={d.color} />))}
                   </Pie>
                   <Tooltip formatter={(value: number) => value} />
                   <Legend />
@@ -181,9 +223,7 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
       {/* Expenses by Category + Recent Expenses */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Despesas por Categoria</CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Despesas por Categoria</CardTitle></CardHeader>
           <CardContent>
             {expensesByCategory.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma despesa registrada</p>
@@ -191,9 +231,7 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie data={expensesByCategory} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label={({ name, value }) => `${name}: ${formatCurrency(value)}`}>
-                    {expensesByCategory.map((d, i) => (
-                      <Cell key={i} fill={d.color} />
-                    ))}
+                    {expensesByCategory.map((d, i) => (<Cell key={i} fill={d.color} />))}
                   </Pie>
                   <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   <Legend />
@@ -202,12 +240,8 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
             )}
           </CardContent>
         </Card>
-
-        {/* Recent Expenses Table */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Últimas Despesas</CardTitle>
-          </CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Últimas Despesas</CardTitle></CardHeader>
           <CardContent>
             {expenses.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma despesa registrada</p>
@@ -227,12 +261,8 @@ export function DashboardPage({ orders, expenses, onAddExpense }: Props) {
                       <tr key={e.id} className="border-b last:border-0">
                         <td className="py-2">{e.date}</td>
                         <td className="py-2">{e.description}</td>
-                        <td className="py-2">
-                          <Badge variant="secondary" className="text-xs">{CATEGORY_LABELS[e.category]}</Badge>
-                        </td>
-                        <td className="py-2 text-right font-['Space_Grotesk'] font-medium text-destructive">
-                          {formatCurrency(e.amount)}
-                        </td>
+                        <td className="py-2"><Badge variant="secondary" className="text-xs">{CATEGORY_LABELS[e.category]}</Badge></td>
+                        <td className="py-2 text-right font-['Space_Grotesk'] font-medium text-destructive">{formatCurrency(e.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
