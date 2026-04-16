@@ -371,6 +371,7 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete, on
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl md:text-2xl font-bold tracking-tight">👥 Clientes</h1>
         <div className="flex gap-2">
+          <ClientUpload onImported={onImportClients} />
           <Button onClick={onAddClient} className="gap-2" size="sm">
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline">Novo Cliente</span>
