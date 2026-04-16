@@ -15,23 +15,29 @@ import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus, Pencil, Download } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
 import { SupportChatBot } from "@/components/SupportChatBot";
+import { ClientUpload } from "@/components/ClientUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const Index = () => {
   const { user } = useAuth();
-  const { role } = useUserRole();
+  const { role, loading: roleLoading } = useUserRole();
   const [orders, setOrders] = useState<Order[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState("orders");
+  const [currentPage, setCurrentPage] = useState(() => "orders");
   const [showForm, setShowForm] = useState(false);
   const [clients, setClients] = useState<Client[]>([]);
   const [showClientDialog, setShowClientDialog] = useState(false);
   const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+
+  // Support users should only see support page
+  useEffect(() => {
+    if (role === "support") setCurrentPage("support");
+  }, [role]);
 
   const canDelete = role === "admin";
 
@@ -157,11 +163,11 @@ const Index = () => {
       <AppSidebar currentPage={currentPage} onNavigate={setCurrentPage} />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 border-b bg-card flex items-center justify-between px-4 md:px-6">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground pl-10 md:pl-0">
+        <header className="h-14 border-b flex items-center justify-between px-4 md:px-6" style={{ background: 'hsl(180, 30%, 18%)' }}>
+          <div className="flex items-center gap-2 text-sm pl-10 md:pl-0" style={{ color: 'hsl(0, 0%, 75%)' }}>
             <span>Home</span>
             <ChevronRight className="h-3.5 w-3.5" />
-            <span className="text-foreground font-medium">{breadcrumbLabels[currentPage]}</span>
+            <span className="font-medium" style={{ color: 'hsl(0, 0%, 95%)' }}>{breadcrumbLabels[currentPage]}</span>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="secondary" className="font-['Space_Grotesk'] font-bold px-2 md:px-3 py-1 text-xs md:text-sm">
@@ -191,7 +197,7 @@ const Index = () => {
           )}
 
           {currentPage === "dashboard" && (
-            <DashboardPage orders={orders} expenses={expenses} onAddExpense={() => setShowExpenseDialog(true)} />
+            <DashboardPage orders={orders} expenses={expenses} />
           )}
 
           {currentPage === "clients" && (
@@ -201,6 +207,7 @@ const Index = () => {
               onAddClient={() => setShowClientDialog(true)}
               onEditClient={(c) => setEditingClient(c)}
               canDelete={canDelete}
+              onImportClients={loadData}
             />
           )}
 
@@ -290,9 +297,10 @@ interface ClientsPageProps {
   onAddClient: () => void;
   onEditClient: (client: Client) => void;
   canDelete: boolean;
+  onImportClients: () => void;
 }
 
-function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete }: ClientsPageProps) {
+function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete, onImportClients }: ClientsPageProps) {
   const allClientsData = useMemo(() => {
     const map: Record<string, { name: string; phone: string; address: string; totalOrders: number; totalSpent: number; orderDates: { date: string; total: number; baskets: number }[] }> = {};
     orders.forEach((o) => {
@@ -363,6 +371,7 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete }: 
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h1 className="text-xl md:text-2xl font-bold tracking-tight">👥 Clientes</h1>
         <div className="flex gap-2">
+          <ClientUpload onImported={onImportClients} />
           <Button onClick={onAddClient} className="gap-2" size="sm">
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline">Novo Cliente</span>

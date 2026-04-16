@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Search, SlidersHorizontal, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 interface Props {
   orders: Order[];
@@ -28,15 +28,26 @@ const ITEMS_PER_PAGE = 10;
 export function OrdersTable({ orders, onSelect, onDelete }: Props) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const filtered = orders.filter(
-    (o) =>
-      o.name.toLowerCase().includes(search.toLowerCase()) ||
-      o.phone.includes(search)
-  );
+  const filtered = orders.filter((o) => {
+    const matchesSearch = o.name.toLowerCase().includes(search.toLowerCase()) || o.phone.includes(search);
+    const matchesDateFrom = !dateFrom || o.date >= dateFrom;
+    const matchesDateTo = !dateTo || o.date <= dateTo;
+    return matchesSearch && matchesDateFrom && matchesDateTo;
+  });
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  const clearFilters = () => {
+    setDateFrom("");
+    setDateTo("");
+    setShowDateFilter(false);
+    setPage(1);
+  };
 
   if (orders.length === 0) {
     return (
@@ -66,12 +77,38 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
               className="pl-9 w-full sm:w-64 h-9"
             />
           </div>
-          <Button variant="outline" size="sm" className="gap-1.5 h-9">
+          <Button
+            variant={showDateFilter ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5 h-9"
+            onClick={() => setShowDateFilter(!showDateFilter)}
+          >
             <SlidersHorizontal className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Filtro</span>
           </Button>
         </div>
       </div>
+
+      {/* Date Filter */}
+      {showDateFilter && (
+        <div className="flex flex-wrap gap-3 items-end p-3 rounded-lg border bg-card">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Data Início</label>
+            <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+              className="border rounded-md px-3 py-1.5 text-sm bg-background" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Data Fim</label>
+            <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+              className="border rounded-md px-3 py-1.5 text-sm bg-background" />
+          </div>
+          {(dateFrom || dateTo) && (
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1 text-destructive">
+              <X className="h-3.5 w-3.5" /> Limpar
+            </Button>
+          )}
+        </div>
+      )}
 
       {/* Mobile cards */}
       <div className="space-y-3 md:hidden">
@@ -98,12 +135,8 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
                 <div className="flex items-center gap-2">
                   <Badge className={payment.className} variant="secondary">{payment.label}</Badge>
                   {onDelete && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7"
+                      onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}>
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                     </Button>
                   )}
@@ -135,35 +168,23 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
               const payment = paymentStatus(order);
               const orderNum = String(10010 + orders.indexOf(order)).padStart(5, "0");
               return (
-                <TableRow
-                  key={order.id}
-                  className="cursor-pointer hover:bg-muted/30"
-                  onClick={() => onSelect(order)}
-                >
+                <TableRow key={order.id} className="cursor-pointer hover:bg-muted/30" onClick={() => onSelect(order)}>
                   <TableCell className="font-mono text-muted-foreground text-sm">{orderNum}</TableCell>
                   <TableCell className="font-medium">{order.name}</TableCell>
                   <TableCell className="text-muted-foreground">{order.phone}</TableCell>
                   <TableCell className="text-center">{order.baskets}</TableCell>
-                  <TableCell className="text-right font-medium font-['Space_Grotesk']">
-                    {formatCurrency(order.total)}
-                  </TableCell>
+                  <TableCell className="text-right font-medium font-['Space_Grotesk']">{formatCurrency(order.total)}</TableCell>
                   <TableCell className="text-center">
                     <Badge className={payment.className} variant="secondary">{payment.label}</Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground">{order.date}</TableCell>
                   <TableCell className="text-center">
-                    <Badge className={statusConfig[order.status].className} variant="secondary">
-                      {statusConfig[order.status].label}
-                    </Badge>
+                    <Badge className={statusConfig[order.status].className} variant="secondary">{statusConfig[order.status].label}</Badge>
                   </TableCell>
                   <TableCell>
                     {onDelete && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}
-                      >
+                      <Button variant="ghost" size="icon" className="h-8 w-8"
+                        onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     )}

@@ -9,8 +9,11 @@
     --background: 180 20% 98%;
     --foreground: 180 25% 12%;
 
-    --card: 0 0% 100%;
+    --card: 180 15% 97%;
     --card-foreground: 180 25% 12%;
+
+    --header-bg: 180 30% 18%;
+    --header-foreground: 0 0% 95%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 180 25% 12%;
