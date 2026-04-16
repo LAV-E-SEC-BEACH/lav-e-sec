@@ -297,9 +297,10 @@ interface ClientsPageProps {
   onAddClient: () => void;
   onEditClient: (client: Client) => void;
   canDelete: boolean;
+  onImportClients: () => void;
 }
 
-function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete }: ClientsPageProps) {
+function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete, onImportClients }: ClientsPageProps) {
   const allClientsData = useMemo(() => {
     const map: Record<string, { name: string; phone: string; address: string; totalOrders: number; totalSpent: number; orderDates: { date: string; total: number; baskets: number }[] }> = {};
     orders.forEach((o) => {
