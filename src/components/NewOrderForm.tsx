@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { calculateTotal, formatCurrency, PRICE_PER_BASKET } from "@/lib/laundry";
-import { Plus, Minus, ShoppingBasket } from "lucide-react";
+import { calculateTotal, formatCurrency, PRICE_PER_BASKET, PaymentMethod, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
+import { Plus, Minus, ShoppingBasket, CreditCard, Smartphone, Wallet } from "lucide-react";
 
 export interface KnownClient {
   name: string;
@@ -14,7 +14,7 @@ export interface KnownClient {
 }
 
 interface Props {
-  onSubmit: (name: string, phone: string, baskets: number) => void;
+  onSubmit: (name: string, phone: string, baskets: number, paymentMethod: PaymentMethod) => void;
   knownClients?: KnownClient[];
 }
 
@@ -22,6 +22,7 @@ export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [baskets, setBaskets] = useState(1);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [nameOpen, setNameOpen] = useState(false);
 
   const total = calculateTotal(baskets);
