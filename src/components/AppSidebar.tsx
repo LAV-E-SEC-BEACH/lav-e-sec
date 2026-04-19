@@ -93,6 +93,18 @@ function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onIt
           <LogOut className="h-4.5 w-4.5" />
           Sair
         </button>
+        <div className="px-3 pt-2 mt-2 border-t border-primary-foreground/10 text-[10px] text-primary-foreground/50 leading-relaxed">
+          <p>Desenvolvido por <span className="font-semibold text-primary-foreground/80">Matheus Lessa</span></p>
+          <a
+            href="https://github.com/lessamatheuss01"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-primary-foreground/80 transition-colors"
+          >
+            github.com/lessamatheuss01
+          </a>
+          <p className="mt-1 italic">Sem direitos autorais reservados — uso livre.</p>
+        </div>
       </div>
       <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </>

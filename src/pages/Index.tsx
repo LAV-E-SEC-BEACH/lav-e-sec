@@ -11,6 +11,16 @@ import { Expense } from "@/lib/expenses";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2 } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";

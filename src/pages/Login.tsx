@@ -65,7 +65,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
@@ -142,6 +142,24 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
+
+      <footer className="mt-6 text-center text-xs text-muted-foreground max-w-md space-y-1">
+        <p>
+          Desenvolvido por{" "}
+          <span className="font-semibold text-foreground">Matheus Lessa</span>
+        </p>
+        <a
+          href="https://github.com/lessamatheuss01"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-foreground transition-colors underline"
+        >
+          github.com/lessamatheuss01
+        </a>
+        <p className="italic pt-1">
+          Este projeto é distribuído sem direitos autorais reservados — uso livre permitido.
+        </p>
+      </footer>
     </div>
   );
 };
