@@ -1,14 +1,16 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Order, formatCurrency, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
+import { Order, formatCurrency, PAYMENT_METHOD_LABELS, PaymentMethod } from "@/lib/laundry";
 import { OrderMessages } from "@/components/OrderMessages";
+import { Smartphone, CreditCard, Wallet } from "lucide-react";
 
 interface Props {
   order: Order | null;
   open: boolean;
   onClose: () => void;
   onStatusChange: (id: string, status: Order["status"]) => void;
+  onPaymentMethodChange?: (id: string, paymentMethod: PaymentMethod) => void;
 }
 
 const statusConfig: Record<Order["status"], { label: string; className: string }> = {
@@ -17,7 +19,13 @@ const statusConfig: Record<Order["status"], { label: string; className: string }
   picked_up: { label: "Finalizado", className: "bg-muted text-muted-foreground" },
 };
 
-export function OrderDetailDialog({ order, open, onClose, onStatusChange }: Props) {
+const paymentOptions: { value: PaymentMethod; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "pix", label: "Pix", icon: Smartphone },
+  { value: "credito", label: "Crédito", icon: CreditCard },
+  { value: "debito", label: "Débito", icon: Wallet },
+];
+
+export function OrderDetailDialog({ order, open, onClose, onStatusChange, onPaymentMethodChange }: Props) {
   if (!order) return null;
 
   return (
@@ -73,6 +81,27 @@ export function OrderDetailDialog({ order, open, onClose, onStatusChange }: Prop
               ))}
             </div>
           </div>
+
+          {/* Payment Method Change */}
+          {onPaymentMethodChange && (
+            <div>
+              <p className="text-sm font-medium mb-2">Forma de Pagamento</p>
+              <div className="flex gap-2">
+                {paymentOptions.map(({ value, label, icon: Icon }) => (
+                  <Button
+                    key={value}
+                    size="sm"
+                    variant={order.paymentMethod === value ? "default" : "outline"}
+                    onClick={() => onPaymentMethodChange(order.id, value)}
+                    className="flex-1 gap-2"
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Messages */}
           <OrderMessages order={order} />

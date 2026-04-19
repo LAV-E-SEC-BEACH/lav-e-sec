@@ -101,6 +101,14 @@ const Index = () => {
     toast.success(`Status alterado para: ${labels[status]}`);
   };
 
+  const handlePaymentMethodChange = async (id: string, paymentMethod: import("@/lib/laundry").PaymentMethod) => {
+    const { error } = await supabase.from("orders").update({ payment_method: paymentMethod } as any).eq("id", id);
+    if (error) { toast.error("Erro ao alterar forma de pagamento."); return; }
+    setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, paymentMethod } : o)));
+    setSelectedOrder((prev) => (prev?.id === id ? { ...prev, paymentMethod } : prev));
+    toast.success(`Forma de pagamento alterada para: ${paymentMethod === "pix" ? "Pix" : paymentMethod === "credito" ? "Crédito" : "Débito"}`);
+  };
+
   const handleAddClient = async (client: Client) => {
     if (!user) return;
     const { data, error } = await supabase.from("clients").insert({
@@ -286,7 +294,7 @@ const Index = () => {
       <NewClientDialog open={showClientDialog} onClose={() => setShowClientDialog(false)} onSubmit={handleAddClient} />
       <EditClientDialog open={!!editingClient} onClose={() => setEditingClient(null)} client={editingClient} onSave={handleEditClient} />
       <NewExpenseDialog open={showExpenseDialog} onClose={() => setShowExpenseDialog(false)} onSubmit={handleAddExpense} />
-      <OrderDetailDialog order={selectedOrder} open={dialogOpen} onClose={() => setDialogOpen(false)} onStatusChange={handleStatusChange} />
+      <OrderDetailDialog order={selectedOrder} open={dialogOpen} onClose={() => setDialogOpen(false)} onStatusChange={handleStatusChange} onPaymentMethodChange={handlePaymentMethodChange} />
       <SupportChatBot />
     </div>
   );
