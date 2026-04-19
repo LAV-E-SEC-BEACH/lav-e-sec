@@ -11,6 +11,16 @@ import { Expense } from "@/lib/expenses";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2 } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
@@ -333,6 +343,8 @@ interface ClientsPageProps {
 }
 
 function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClient, canDelete, onImportClients }: ClientsPageProps) {
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+
   const allClientsData = useMemo(() => {
     const map: Record<string, { name: string; phone: string; address: string; totalOrders: number; totalSpent: number; orderDates: { date: string; total: number; baskets: number }[] }> = {};
     orders.forEach((o) => {
@@ -456,9 +468,7 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            if (confirm(`Excluir o cliente ${c.name}?`)) onDeleteClient(findClient(c.phone)!.id);
-                          }}
+                          onClick={() => setClientToDelete(findClient(c.phone)!)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -516,9 +526,7 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
                               variant="ghost"
                               size="sm"
                               className="text-destructive hover:text-destructive"
-                              onClick={() => {
-                                if (confirm(`Excluir o cliente ${c.name}?`)) onDeleteClient(findClient(c.phone)!.id);
-                              }}
+                              onClick={() => setClientToDelete(findClient(c.phone)!)}
                             >
                               <Trash2 className="h-4 w-4 mr-1" /> Excluir
                             </Button>
@@ -533,6 +541,30 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
           </div>
         </>
       )}
+
+      <AlertDialog open={!!clientToDelete} onOpenChange={(v) => !v && setClientToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cliente <span className="font-semibold">{clientToDelete?.name}</span>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (clientToDelete) onDeleteClient(clientToDelete.id);
+                setClientToDelete(null);
+              }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
