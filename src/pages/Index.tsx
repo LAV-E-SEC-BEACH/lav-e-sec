@@ -12,7 +12,7 @@ import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, ChevronRight, UserPlus, Pencil, Download } from "lucide-react";
+import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2 } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
 import { SupportChatBot } from "@/components/SupportChatBot";
 import { ClientUpload } from "@/components/ClientUpload";
@@ -327,11 +327,12 @@ interface ClientsPageProps {
   orders: Order[];
   onAddClient: () => void;
   onEditClient: (client: Client) => void;
+  onDeleteClient: (id: string) => void;
   canDelete: boolean;
   onImportClients: () => void;
 }
 
-function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete, onImportClients }: ClientsPageProps) {
+function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClient, canDelete, onImportClients }: ClientsPageProps) {
   const allClientsData = useMemo(() => {
     const map: Record<string, { name: string; phone: string; address: string; totalOrders: number; totalSpent: number; orderDates: { date: string; total: number; baskets: number }[] }> = {};
     orders.forEach((o) => {
@@ -446,9 +447,23 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete, on
                     {c.address && <p className="text-xs text-muted-foreground">{c.address}</p>}
                   </div>
                   {findClient(c.phone) && (
-                    <Button variant="ghost" size="icon" onClick={() => onEditClient(findClient(c.phone)!)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => onEditClient(findClient(c.phone)!)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            if (confirm(`Excluir o cliente ${c.name}?`)) onDeleteClient(findClient(c.phone)!.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex items-center justify-between text-sm pt-1">
@@ -492,9 +507,23 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, canDelete, on
                     <td className="p-4 text-right font-['Space_Grotesk'] font-medium">{formatCurrency(c.totalSpent)}</td>
                     <td className="p-4 text-center">
                       {findClient(c.phone) && (
-                        <Button variant="ghost" size="sm" onClick={() => onEditClient(findClient(c.phone)!)}>
-                          <Pencil className="h-4 w-4 mr-1" /> Editar
-                        </Button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Button variant="ghost" size="sm" onClick={() => onEditClient(findClient(c.phone)!)}>
+                            <Pencil className="h-4 w-4 mr-1" /> Editar
+                          </Button>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => {
+                                if (confirm(`Excluir o cliente ${c.name}?`)) onDeleteClient(findClient(c.phone)!.id);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" /> Excluir
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
