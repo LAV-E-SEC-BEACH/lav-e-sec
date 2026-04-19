@@ -236,6 +236,7 @@ const Index = () => {
               orders={orders}
               onAddClient={() => setShowClientDialog(true)}
               onEditClient={(c) => setEditingClient(c)}
+              onDeleteClient={handleDeleteClient}
               canDelete={canDelete}
               onImportClients={loadData}
             />
