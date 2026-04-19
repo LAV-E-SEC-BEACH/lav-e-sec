@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Order, formatCurrency } from "@/lib/laundry";
+import { Order, formatCurrency, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
 import { OrderMessages } from "@/components/OrderMessages";
 
 interface Props {

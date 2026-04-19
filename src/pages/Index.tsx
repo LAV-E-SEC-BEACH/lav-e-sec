@@ -52,6 +52,7 @@ const Index = () => {
       setOrders(ordersRes.data.map((o: any) => ({
         id: o.id, date: o.date, name: o.name, phone: o.phone,
         baskets: o.baskets, total: Number(o.total), status: o.status as Order["status"],
+        paymentMethod: o.payment_method ?? null,
       })));
     }
     if (clientsRes.data) {
@@ -67,15 +68,16 @@ const Index = () => {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const handleNewOrder = async (name: string, phone: string, baskets: number) => {
+  const handleNewOrder = async (name: string, phone: string, baskets: number, paymentMethod: import("@/lib/laundry").PaymentMethod) => {
     if (!user) return;
     const total = calculateTotal(baskets);
     const date = formatDate(new Date());
     const { data, error } = await supabase.from("orders").insert({
       user_id: user.id, name, phone, baskets, total, status: "washing", date,
-    }).select().single();
+      payment_method: paymentMethod,
+    } as any).select().single();
     if (error) { toast.error("Erro ao salvar atendimento."); return; }
-    const order: Order = { id: data.id, date, name, phone, baskets, total, status: "washing" };
+    const order: Order = { id: data.id, date, name, phone, baskets, total, status: "washing", paymentMethod };
     setOrders((prev) => [order, ...prev]);
     setSelectedOrder(order); setDialogOpen(true); setShowForm(false);
     toast.success("Atendimento registrado com sucesso!");
