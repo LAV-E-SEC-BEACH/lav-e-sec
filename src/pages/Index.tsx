@@ -111,12 +111,32 @@ const Index = () => {
 
   const handleAddClient = async (client: Client) => {
     if (!user) return;
+    // Verifica duplicidade por telefone ou nome (case-insensitive)
+    const phoneNormalized = client.phone.replace(/\D/g, "");
+    const nameNormalized = client.name.trim().toLowerCase();
+    const duplicate = clients.find((c) => {
+      const cPhone = c.phone.replace(/\D/g, "");
+      const cName = c.name.trim().toLowerCase();
+      return cPhone === phoneNormalized || cName === nameNormalized;
+    });
+    if (duplicate) {
+      toast.error(`Cliente já cadastrado: ${duplicate.name} (${duplicate.phone})`);
+      return;
+    }
     const { data, error } = await supabase.from("clients").insert({
       user_id: user.id, name: client.name, phone: client.phone, address: client.address,
     }).select().single();
     if (error) { toast.error("Erro ao cadastrar cliente."); return; }
     setClients((prev) => [{ id: data.id, name: data.name, phone: data.phone, address: (data as any).address || "" }, ...prev]);
     toast.success("Cliente cadastrado com sucesso!");
+  };
+
+  const handleDeleteClient = async (id: string) => {
+    if (!canDelete) { toast.error("Você não tem permissão para excluir."); return; }
+    const { error } = await supabase.from("clients").delete().eq("id", id);
+    if (error) { toast.error("Erro ao excluir cliente."); return; }
+    setClients((prev) => prev.filter((c) => c.id !== id));
+    toast.info("Cliente excluído.");
   };
 
   const handleEditClient = async (client: Client) => {
