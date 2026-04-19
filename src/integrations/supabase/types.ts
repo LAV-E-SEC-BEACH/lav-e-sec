@@ -78,6 +78,7 @@ export type Database = {
           date: string
           id: string
           name: string
+          payment_method: string | null
           phone: string
           status: string
           total: number
@@ -90,6 +91,7 @@ export type Database = {
           date: string
           id?: string
           name: string
+          payment_method?: string | null
           phone: string
           status?: string
           total: number
@@ -102,6 +104,7 @@ export type Database = {
           date?: string
           id?: string
           name?: string
+          payment_method?: string | null
           phone?: string
           status?: string
           total?: number
