@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Order, formatCurrency } from "@/lib/laundry";
+import { Order, formatCurrency, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
 import { OrderMessages } from "@/components/OrderMessages";
 
 interface Props {
@@ -35,7 +35,7 @@ export function OrderDetailDialog({ order, open, onClose, onStatusChange }: Prop
 
         <div className="space-y-5 pt-2">
           {/* Order Info */}
-          <div className="grid grid-cols-3 gap-4 rounded-lg bg-muted/50 p-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-lg bg-muted/50 p-4">
             <div>
               <p className="text-xs text-muted-foreground">Cestos</p>
               <p className="text-lg font-bold font-['Space_Grotesk']">{order.baskets}</p>
@@ -47,6 +47,12 @@ export function OrderDetailDialog({ order, open, onClose, onStatusChange }: Prop
             <div>
               <p className="text-xs text-muted-foreground">Data</p>
               <p className="text-lg font-bold font-['Space_Grotesk']">{order.date}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Pagamento</p>
+              <p className="text-lg font-bold font-['Space_Grotesk']">
+                {order.paymentMethod ? PAYMENT_METHOD_LABELS[order.paymentMethod] : "—"}
+              </p>
             </div>
           </div>
 

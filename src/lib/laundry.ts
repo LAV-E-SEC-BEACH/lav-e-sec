@@ -1,5 +1,13 @@
 export const PRICE_PER_BASKET = 17;
 
+export type PaymentMethod = "pix" | "credito" | "debito";
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  pix: "Pix",
+  credito: "Cartão de Crédito",
+  debito: "Cartão de Débito",
+};
+
 export interface Order {
   id: string;
   date: string;
@@ -8,6 +16,7 @@ export interface Order {
   baskets: number;
   total: number;
   status: "washing" | "ready" | "picked_up";
+  paymentMethod?: PaymentMethod | null;
 }
 
 export function calculateTotal(baskets: number): number {
