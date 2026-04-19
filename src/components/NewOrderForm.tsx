@@ -44,10 +44,11 @@ export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !phone.trim()) return;
-    onSubmit(name.trim(), phone.trim(), baskets);
+    onSubmit(name.trim(), phone.trim(), baskets, paymentMethod);
     setName("");
     setPhone("");
     setBaskets(1);
+    setPaymentMethod("pix");
   };
 
   const canSubmit = name.trim().length > 0 && phone.trim().length > 0;
