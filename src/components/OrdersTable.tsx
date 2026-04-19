@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Order, formatCurrency } from "@/lib/laundry";
+import { Order, formatCurrency, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,15 +132,18 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{order.date}</span>
-                <div className="flex items-center gap-2">
-                  <Badge className={payment.className} variant="secondary">{payment.label}</Badge>
-                  {onDelete && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7"
-                      onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}>
-                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    </Button>
-                  )}
-                </div>
+                <span className="text-xs font-medium">
+                  {order.paymentMethod ? PAYMENT_METHOD_LABELS[order.paymentMethod] : "—"}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <Badge className={payment.className} variant="secondary">{payment.label}</Badge>
+                {onDelete && (
+                  <Button variant="ghost" size="icon" className="h-7 w-7"
+                    onClick={(e) => { e.stopPropagation(); onDelete(order.id); }}>
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                )}
               </div>
             </div>
           );
@@ -157,6 +160,7 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
               <TableHead>TELEFONE</TableHead>
               <TableHead className="text-center">CESTOS</TableHead>
               <TableHead className="text-right">VALOR</TableHead>
+              <TableHead className="text-center">FORMA PAG.</TableHead>
               <TableHead className="text-center">PAGAMENTO</TableHead>
               <TableHead>DATA</TableHead>
               <TableHead className="text-center">STATUS</TableHead>
@@ -174,6 +178,9 @@ export function OrdersTable({ orders, onSelect, onDelete }: Props) {
                   <TableCell className="text-muted-foreground">{order.phone}</TableCell>
                   <TableCell className="text-center">{order.baskets}</TableCell>
                   <TableCell className="text-right font-medium font-['Space_Grotesk']">{formatCurrency(order.total)}</TableCell>
+                  <TableCell className="text-center text-sm">
+                    {order.paymentMethod ? PAYMENT_METHOD_LABELS[order.paymentMethod] : "—"}
+                  </TableCell>
                   <TableCell className="text-center">
                     <Badge className={payment.className} variant="secondary">{payment.label}</Badge>
                   </TableCell>
