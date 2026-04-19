@@ -343,6 +343,8 @@ interface ClientsPageProps {
 }
 
 function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClient, canDelete, onImportClients }: ClientsPageProps) {
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+
   const allClientsData = useMemo(() => {
     const map: Record<string, { name: string; phone: string; address: string; totalOrders: number; totalSpent: number; orderDates: { date: string; total: number; baskets: number }[] }> = {};
     orders.forEach((o) => {
