@@ -147,6 +147,29 @@ export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
             </p>
           </div>
 
+          <div className="space-y-2">
+            <Label>Forma de Pagamento *</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { v: "pix" as PaymentMethod, icon: Smartphone },
+                { v: "credito" as PaymentMethod, icon: CreditCard },
+                { v: "debito" as PaymentMethod, icon: Wallet },
+              ]).map(({ v, icon: Icon }) => (
+                <Button
+                  key={v}
+                  type="button"
+                  variant={paymentMethod === v ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setPaymentMethod(v)}
+                  className="gap-1.5 h-auto py-2 flex-col"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="text-xs">{PAYMENT_METHOD_LABELS[v]}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
           <div className="rounded-lg bg-primary/10 p-4 text-center">
             <p className="text-sm text-muted-foreground">Total</p>
             <p className="text-3xl font-bold text-primary font-['Space_Grotesk']">
