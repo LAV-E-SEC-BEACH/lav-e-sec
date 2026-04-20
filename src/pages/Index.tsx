@@ -116,7 +116,7 @@ const Index = () => {
     if (error) { toast.error("Erro ao alterar forma de pagamento."); return; }
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, paymentMethod } : o)));
     setSelectedOrder((prev) => (prev?.id === id ? { ...prev, paymentMethod } : prev));
-    toast.success(`Forma de pagamento alterada para: ${paymentMethod === "pix" ? "Pix" : paymentMethod === "credito" ? "Crédito" : "Débito"}`);
+    toast.success(`Forma de pagamento alterada para: ${PAYMENT_METHOD_LABELS[paymentMethod]}`);
   };
 
   const handleAddClient = async (client: Client) => {
