@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Order, formatCurrency, PAYMENT_METHOD_LABELS, PaymentMethod } from "@/lib/laundry";
 import { OrderMessages } from "@/components/OrderMessages";
-import { Smartphone, CreditCard, Wallet } from "lucide-react";
+import { Smartphone, CreditCard, Wallet, Banknote } from "lucide-react";
 
 interface Props {
   order: Order | null;
@@ -23,6 +23,7 @@ const paymentOptions: { value: PaymentMethod; label: string; icon: React.Compone
   { value: "pix", label: "Pix", icon: Smartphone },
   { value: "credito", label: "Crédito", icon: CreditCard },
   { value: "debito", label: "Débito", icon: Wallet },
+  { value: "dinheiro", label: "Dinheiro", icon: Banknote },
 ];
 
 export function OrderDetailDialog({ order, open, onClose, onStatusChange, onPaymentMethodChange }: Props) {

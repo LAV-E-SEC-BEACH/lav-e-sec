@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { calculateTotal, formatCurrency, PRICE_PER_BASKET, PaymentMethod, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
-import { Plus, Minus, ShoppingBasket, CreditCard, Smartphone, Wallet } from "lucide-react";
+import { Plus, Minus, ShoppingBasket, CreditCard, Smartphone, Wallet, Banknote } from "lucide-react";
 
 export interface KnownClient {
   name: string;
@@ -149,11 +149,12 @@ export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
 
           <div className="space-y-2">
             <Label>Forma de Pagamento *</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { v: "pix" as PaymentMethod, icon: Smartphone },
                 { v: "credito" as PaymentMethod, icon: CreditCard },
                 { v: "debito" as PaymentMethod, icon: Wallet },
+                { v: "dinheiro" as PaymentMethod, icon: Banknote },
               ]).map(({ v, icon: Icon }) => (
                 <Button
                   key={v}
