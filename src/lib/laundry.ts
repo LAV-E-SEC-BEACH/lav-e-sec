@@ -1,11 +1,12 @@
 export const PRICE_PER_BASKET = 17;
 
-export type PaymentMethod = "pix" | "credito" | "debito";
+export type PaymentMethod = "pix" | "credito" | "debito" | "dinheiro";
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   pix: "Pix",
   credito: "Cartão de Crédito",
   debito: "Cartão de Débito",
+  dinheiro: "Dinheiro",
 };
 
 export interface Order {
