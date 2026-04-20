@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
 
 interface Props {
   orders: Order[];
@@ -53,9 +54,6 @@ export function DashboardPage({ orders, expenses }: Props) {
     }
 
     const totals = {
-      atendimentos: dayOrders.length,
-      cestos: dayOrders.reduce((s, o) => s + o.baskets, 0),
-      receita: dayRevenue,
       pix: 0,
       credito: 0,
       debito: 0,
@@ -66,72 +64,77 @@ export function DashboardPage({ orders, expenses }: Props) {
       if (o.paymentMethod) totals[o.paymentMethod as PaymentMethod] += o.total;
       else totals.semPagamento += o.total;
     });
+    const totalCestos = dayOrders.reduce((s, o) => s + o.baskets, 0);
 
-    const rows: string[][] = [];
-    rows.push([`Relatório do dia ${selectedDateStr}`]);
-    rows.push([]);
-    rows.push(["Resumo do Dia"]);
-    rows.push(["Atendimentos", String(totals.atendimentos)]);
-    rows.push(["Cestos", String(totals.cestos)]);
-    rows.push(["Receita Total", formatCurrency(totals.receita)]);
-    rows.push(["Pix", formatCurrency(totals.pix)]);
-    rows.push(["Crédito", formatCurrency(totals.credito)]);
-    rows.push(["Débito", formatCurrency(totals.debito)]);
-    rows.push(["Dinheiro", formatCurrency(totals.dinheiro)]);
-    rows.push(["Sem Pagamento", formatCurrency(totals.semPagamento)]);
-    rows.push(["Despesas", formatCurrency(dayExpensesTotal)]);
-    rows.push(["Lucro do Dia", formatCurrency(dayProfit)]);
+    const wb = XLSX.utils.book_new();
 
-    rows.push([]);
-    rows.push(["Detalhamento de Atendimentos"]);
-    rows.push(["Cliente", "Telefone", "Cestos", "Forma de Pagamento", "Status", "Total"]);
-    dayOrders.forEach((o) => {
-      rows.push([
-        o.name,
-        o.phone,
-        String(o.baskets),
-        o.paymentMethod ? PAYMENT_METHOD_LABELS[o.paymentMethod as PaymentMethod] : "Sem pagamento",
-        o.status,
-        formatCurrency(o.total),
-      ]);
-    });
+    // Aba 1 - Resumo
+    const resumoData: (string | number)[][] = [
+      [`Relatório do dia ${selectedDateStr}`],
+      [],
+      ["Indicador", "Valor"],
+      ["Atendimentos", dayOrders.length],
+      ["Cestos", totalCestos],
+      ["Receita Total", dayRevenue],
+      ["Pix", totals.pix],
+      ["Crédito", totals.credito],
+      ["Débito", totals.debito],
+      ["Dinheiro", totals.dinheiro],
+      ["Sem Pagamento", totals.semPagamento],
+      ["Despesas", dayExpensesTotal],
+      ["Lucro do Dia", dayProfit],
+    ];
+    const wsResumo = XLSX.utils.aoa_to_sheet(resumoData);
+    wsResumo["!cols"] = [{ wch: 22 }, { wch: 18 }];
+    XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
 
-    rows.push([]);
-    rows.push(["Detalhamento de Despesas"]);
-    rows.push(["Descrição", "Categoria", "Valor"]);
-    dayExpenses.forEach((ex) => {
-      rows.push([ex.description, CATEGORY_LABELS[ex.category], formatCurrency(ex.amount)]);
-    });
+    // Aba 2 - Atendimentos
+    const atendHeader = ["Cliente", "Telefone", "Cestos", "Forma de Pagamento", "Status", "Total"];
+    const atendRows = dayOrders.map((o) => [
+      o.name,
+      o.phone,
+      o.baskets,
+      o.paymentMethod ? PAYMENT_METHOD_LABELS[o.paymentMethod as PaymentMethod] : "Sem pagamento",
+      o.status,
+      o.total,
+    ]);
+    const wsAtend = XLSX.utils.aoa_to_sheet([atendHeader, ...atendRows]);
+    wsAtend["!cols"] = [{ wch: 25 }, { wch: 16 }, { wch: 8 }, { wch: 20 }, { wch: 14 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsAtend, "Atendimentos");
 
-    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `relatorio_${selectedDateStr}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Relatório exportado com sucesso!");
+    // Aba 3 - Despesas
+    const despHeader = ["Descrição", "Categoria", "Valor"];
+    const despRows = dayExpenses.map((e) => [
+      e.description,
+      CATEGORY_LABELS[e.category],
+      e.amount,
+    ]);
+    const wsDesp = XLSX.utils.aoa_to_sheet([despHeader, ...despRows]);
+    wsDesp["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, wsDesp, "Despesas");
+
+    XLSX.writeFile(wb, `relatorio_${selectedDateStr}.xlsx`);
+    toast.success("Relatório exportado em Excel!");
   };
 
-  // Revenue vs Expenses by payment method (apenas dia selecionado)
-  const revenueByMethod = useMemo(() => {
-    const methods: { name: string; receita: number }[] = [
-      { name: "Pix", receita: 0 },
-      { name: "Crédito", receita: 0 },
-      { name: "Débito", receita: 0 },
-      { name: "Dinheiro", receita: 0 },
-      { name: "Sem Pgto", receita: 0 },
-    ];
-    dayOrders.forEach((o) => {
-      if (o.paymentMethod === "pix") methods[0].receita += o.total;
-      else if (o.paymentMethod === "credito") methods[1].receita += o.total;
-      else if (o.paymentMethod === "debito") methods[2].receita += o.total;
-      else if (o.paymentMethod === "dinheiro") methods[3].receita += o.total;
-      else methods[4].receita += o.total;
+  // Receita vs Despesas - últimos 7 dias com dados
+  const revenueVsExpenses = useMemo(() => {
+    const map = new Map<string, { receita: number; despesas: number }>();
+    orders.forEach((o) => {
+      const entry = map.get(o.date) || { receita: 0, despesas: 0 };
+      entry.receita += o.total;
+      map.set(o.date, entry);
     });
-    return methods.filter((m) => m.receita > 0);
-  }, [dayOrders]);
+    expenses.forEach((e) => {
+      const entry = map.get(e.date) || { receita: 0, despesas: 0 };
+      entry.despesas += e.amount;
+      map.set(e.date, entry);
+    });
+    return Array.from(map.entries())
+      .map(([date, vals]) => ({ date, ...vals }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-7);
+  }, [orders, expenses]);
 
   const statusData = useMemo(() => {
     const counts = { washing: 0, ready: 0, picked_up: 0 };
@@ -194,7 +197,7 @@ export function DashboardPage({ orders, expenses }: Props) {
           </div>
           <Button onClick={handleExportDashboard} variant="outline" className="gap-2" size="sm">
             <Download className="h-4 w-4" />
-            Exportar Planilha
+            Exportar Excel
           </Button>
         </div>
       </div>
@@ -244,25 +247,30 @@ export function DashboardPage({ orders, expenses }: Props) {
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Receita por Forma de Pagamento</CardTitle></CardHeader>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Receita vs Despesas</CardTitle>
+            <p className="text-xs text-muted-foreground">Últimos 7 dias com movimentação</p>
+          </CardHeader>
           <CardContent>
-            {revenueByMethod.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">Sem dados nesta data</p>
+            {revenueVsExpenses.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">Sem dados ainda</p>
             ) : (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={revenueByMethod}>
+                <BarChart data={revenueVsExpenses}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
                   <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(value: number) => formatCurrency(value)} />
+                  <Legend />
                   <Bar dataKey="receita" name="Receita" fill="hsl(170, 60%, 42%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="despesas" name="Despesas" fill="hsl(0, 72%, 55%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Status das Ordens</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Status das Ordens (dia)</CardTitle></CardHeader>
           <CardContent>
             {statusData.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Sem ordens nesta data</p>
@@ -284,7 +292,7 @@ export function DashboardPage({ orders, expenses }: Props) {
       {/* Expenses by Category + Day Expenses */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-base">Despesas por Categoria</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Despesas por Categoria (dia)</CardTitle></CardHeader>
           <CardContent>
             {expensesByCategory.length === 0 ? (
               <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma despesa nesta data</p>
