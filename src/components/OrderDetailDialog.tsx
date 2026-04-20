@@ -87,14 +87,14 @@ export function OrderDetailDialog({ order, open, onClose, onStatusChange, onPaym
           {onPaymentMethodChange && (
             <div>
               <p className="text-sm font-medium mb-2">Forma de Pagamento</p>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {paymentOptions.map(({ value, label, icon: Icon }) => (
                   <Button
                     key={value}
                     size="sm"
                     variant={order.paymentMethod === value ? "default" : "outline"}
                     onClick={() => onPaymentMethodChange(order.id, value)}
-                    className="flex-1 gap-2"
+                    className="gap-2"
                   >
                     <Icon className="h-4 w-4" />
                     {label}
