@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Order, formatCurrency, formatDate } from "@/lib/laundry";
+import { Order, formatCurrency, formatDate, PAYMENT_METHOD_LABELS, PaymentMethod } from "@/lib/laundry";
 import { Expense, CATEGORY_LABELS, CATEGORY_COLORS, ExpenseCategory } from "@/lib/expenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,38 +40,106 @@ export function DashboardPage({ orders, expenses }: Props) {
       return true;
     });
 
+    // Consolida por dia
+    const byDay = new Map<string, {
+      atendimentos: number;
+      cestos: number;
+      receita: number;
+      despesas: number;
+      pix: number;
+      credito: number;
+      debito: number;
+      dinheiro: number;
+      semPagamento: number;
+    }>();
+    const ensure = (d: string) => {
+      if (!byDay.has(d)) byDay.set(d, { atendimentos: 0, cestos: 0, receita: 0, despesas: 0, pix: 0, credito: 0, debito: 0, dinheiro: 0, semPagamento: 0 });
+      return byDay.get(d)!;
+    };
+    filteredOrders.forEach((o) => {
+      const e = ensure(o.date);
+      e.atendimentos += 1;
+      e.cestos += o.baskets;
+      e.receita += o.total;
+      if (o.paymentMethod) e[o.paymentMethod as PaymentMethod] += o.total;
+      else e.semPagamento += o.total;
+    });
+    filteredExpenses.forEach((ex) => {
+      const e = ensure(ex.date);
+      e.despesas += ex.amount;
+    });
+
+    const sortedDays = Array.from(byDay.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
     const totalRev = filteredOrders.reduce((s, o) => s + o.total, 0);
     const totalExp = filteredExpenses.reduce((s, e) => s + e.amount, 0);
     const totalProfit = totalRev - totalExp;
 
     const rows: string[][] = [];
-    rows.push(["Atendimentos (datas/hora)", "Receita (valores)", "Despesas (valores)", "Lucro Total (valores)"]);
-
-    const maxLen = Math.max(filteredOrders.length, filteredExpenses.length, 1);
-    for (let i = 0; i < maxLen; i++) {
-      const order = filteredOrders[i];
-      const expense = filteredExpenses[i];
+    rows.push([
+      "Data", "Atendimentos", "Cestos", "Receita",
+      "Pix", "Crédito", "Débito", "Dinheiro", "Sem Pagamento",
+      "Despesas", "Lucro do Dia",
+    ]);
+    sortedDays.forEach(([date, v]) => {
       rows.push([
-        order ? `${order.date} - ${order.name}` : "",
-        order ? formatCurrency(order.total) : "",
-        expense ? `${expense.date} - ${expense.description}: ${formatCurrency(expense.amount)}` : "",
-        i === 0 ? formatCurrency(totalProfit) : "",
+        date,
+        String(v.atendimentos),
+        String(v.cestos),
+        formatCurrency(v.receita),
+        formatCurrency(v.pix),
+        formatCurrency(v.credito),
+        formatCurrency(v.debito),
+        formatCurrency(v.dinheiro),
+        formatCurrency(v.semPagamento),
+        formatCurrency(v.despesas),
+        formatCurrency(v.receita - v.despesas),
       ]);
-    }
+    });
 
-    // Summary row
+    // Totais por forma de pagamento
+    const totalPix = filteredOrders.filter(o => o.paymentMethod === "pix").reduce((s, o) => s + o.total, 0);
+    const totalCred = filteredOrders.filter(o => o.paymentMethod === "credito").reduce((s, o) => s + o.total, 0);
+    const totalDeb = filteredOrders.filter(o => o.paymentMethod === "debito").reduce((s, o) => s + o.total, 0);
+    const totalDin = filteredOrders.filter(o => o.paymentMethod === "dinheiro").reduce((s, o) => s + o.total, 0);
+    const totalSem = filteredOrders.filter(o => !o.paymentMethod).reduce((s, o) => s + o.total, 0);
+    const totalCestos = filteredOrders.reduce((s, o) => s + o.baskets, 0);
+
     rows.push([]);
-    rows.push(["TOTAL", formatCurrency(totalRev), formatCurrency(totalExp), formatCurrency(totalProfit)]);
+    rows.push([
+      "TOTAL",
+      String(filteredOrders.length),
+      String(totalCestos),
+      formatCurrency(totalRev),
+      formatCurrency(totalPix),
+      formatCurrency(totalCred),
+      formatCurrency(totalDeb),
+      formatCurrency(totalDin),
+      formatCurrency(totalSem),
+      formatCurrency(totalExp),
+      formatCurrency(totalProfit),
+    ]);
+
+    // Detalhamento de despesas
+    rows.push([]);
+    rows.push(["Detalhamento de Despesas"]);
+    rows.push(["Data", "Descrição", "Categoria", "Valor"]);
+    filteredExpenses
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .forEach((ex) => {
+        rows.push([ex.date, ex.description, CATEGORY_LABELS[ex.category], formatCurrency(ex.amount)]);
+      });
 
     const csv = rows.map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `dashboard_${exportFrom || "inicio"}_${exportTo || "fim"}.csv`;
+    a.download = `relatorio_${exportFrom || "inicio"}_${exportTo || "fim"}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Planilha do dashboard exportada!");
+    toast.success("Relatório exportado com sucesso!");
   };
 
   // Revenue by day (last 7 unique dates)

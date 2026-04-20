@@ -6,7 +6,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { DashboardPage } from "@/components/DashboardPage";
 import { NewExpenseDialog } from "@/components/NewExpenseDialog";
 import { EditClientDialog } from "@/components/EditClientDialog";
-import { Order, calculateTotal, formatDate, formatCurrency } from "@/lib/laundry";
+import { Order, calculateTotal, formatDate, formatCurrency, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
 import { Expense } from "@/lib/expenses";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
@@ -116,7 +116,7 @@ const Index = () => {
     if (error) { toast.error("Erro ao alterar forma de pagamento."); return; }
     setOrders((prev) => prev.map((o) => (o.id === id ? { ...o, paymentMethod } : o)));
     setSelectedOrder((prev) => (prev?.id === id ? { ...prev, paymentMethod } : prev));
-    toast.success(`Forma de pagamento alterada para: ${paymentMethod === "pix" ? "Pix" : paymentMethod === "credito" ? "Crédito" : "Débito"}`);
+    toast.success(`Forma de pagamento alterada para: ${PAYMENT_METHOD_LABELS[paymentMethod]}`);
   };
 
   const handleAddClient = async (client: Client) => {

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Order, formatCurrency, PAYMENT_METHOD_LABELS, PaymentMethod } from "@/lib/laundry";
 import { OrderMessages } from "@/components/OrderMessages";
-import { Smartphone, CreditCard, Wallet } from "lucide-react";
+import { Smartphone, CreditCard, Wallet, Banknote } from "lucide-react";
 
 interface Props {
   order: Order | null;
@@ -23,6 +23,7 @@ const paymentOptions: { value: PaymentMethod; label: string; icon: React.Compone
   { value: "pix", label: "Pix", icon: Smartphone },
   { value: "credito", label: "Crédito", icon: CreditCard },
   { value: "debito", label: "Débito", icon: Wallet },
+  { value: "dinheiro", label: "Dinheiro", icon: Banknote },
 ];
 
 export function OrderDetailDialog({ order, open, onClose, onStatusChange, onPaymentMethodChange }: Props) {
@@ -86,14 +87,14 @@ export function OrderDetailDialog({ order, open, onClose, onStatusChange, onPaym
           {onPaymentMethodChange && (
             <div>
               <p className="text-sm font-medium mb-2">Forma de Pagamento</p>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {paymentOptions.map(({ value, label, icon: Icon }) => (
                   <Button
                     key={value}
                     size="sm"
                     variant={order.paymentMethod === value ? "default" : "outline"}
                     onClick={() => onPaymentMethodChange(order.id, value)}
-                    className="flex-1 gap-2"
+                    className="gap-2"
                   >
                     <Icon className="h-4 w-4" />
                     {label}
