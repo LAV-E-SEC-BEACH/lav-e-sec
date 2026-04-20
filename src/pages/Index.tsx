@@ -6,7 +6,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { DashboardPage } from "@/components/DashboardPage";
 import { NewExpenseDialog } from "@/components/NewExpenseDialog";
 import { EditClientDialog } from "@/components/EditClientDialog";
-import { Order, calculateTotal, formatDate, formatCurrency } from "@/lib/laundry";
+import { Order, calculateTotal, formatDate, formatCurrency, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
 import { Expense } from "@/lib/expenses";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
