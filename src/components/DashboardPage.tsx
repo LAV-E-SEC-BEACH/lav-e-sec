@@ -30,7 +30,11 @@ function getYesterday(): Date {
 }
 
 export function DashboardPage({ orders, expenses }: Props) {
-  const [selectedDate, setSelectedDate] = useState<Date>(() => getYesterday());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
 
   const selectedDateStr = formatDate(selectedDate);
 
