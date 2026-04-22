@@ -29,6 +29,7 @@ import { ClientUpload } from "@/components/ClientUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { AdminUsers } from "@/pages/AdminUsers";
 
 const Index = () => {
   const { user } = useAuth();
@@ -319,6 +320,8 @@ const Index = () => {
           )}
 
           {currentPage === "support" && <SupportTicketsPage />}
+
+          {currentPage === "admin-users" && <AdminUsers />}
         </main>
       </div>
 
