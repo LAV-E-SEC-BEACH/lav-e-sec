@@ -85,16 +85,6 @@ export function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("admin-users", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        body: undefined,
-      });
-      // The invoke with GET doesn't support query params easily, use POST workaround
-    } catch {}
-
-    // Use fetch directly for GET with query params
-    try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const url = `https://${projectId}.supabase.co/functions/v1/admin-users?action=list`;
       const res = await fetch(url, {
