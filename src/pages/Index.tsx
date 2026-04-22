@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AdminUsers } from "@/pages/AdminUsers";
+import { AuditLogs } from "@/pages/AuditLogs";
 
 const Index = () => {
   const { user } = useAuth();
@@ -322,6 +323,8 @@ const Index = () => {
           {currentPage === "support" && <SupportTicketsPage />}
 
           {currentPage === "admin-users" && <AdminUsers />}
+
+          {currentPage === "audit-logs" && <AuditLogs />}
         </main>
       </div>
 
