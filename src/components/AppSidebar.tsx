@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset, ShieldCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +21,7 @@ const allNavItems = [
   { id: "clients", label: "Clientes", icon: Users },
   { id: "expenses", label: "Despesas", icon: Receipt },
   { id: "support", label: "Suporte", icon: Headset },
+  { id: "admin-users", label: "Usuários", icon: ShieldCheck },
 ];
 
 function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onItemClick?: () => void }) {
@@ -31,7 +32,9 @@ function SidebarContent({ currentPage, onNavigate, onItemClick }: Props & { onIt
 
   const navItems = role === "support"
     ? allNavItems.filter((item) => item.id === "support")
-    : allNavItems;
+    : role === "admin"
+      ? allNavItems
+      : allNavItems.filter((item) => item.id !== "admin-users");
 
   useEffect(() => {
     if (user) {
