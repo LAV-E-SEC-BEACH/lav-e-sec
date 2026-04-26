@@ -11,6 +11,7 @@ import { Expense } from "@/lib/expenses";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2 } from "lucide-react";
+import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2, Search, ChevronLeft } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
 import { SupportChatBot } from "@/components/SupportChatBot";
 import { ClientUpload } from "@/components/ClientUpload";
@@ -350,6 +351,9 @@ interface ClientsPageProps {
 
 function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClient, canDelete, onImportClients }: ClientsPageProps) {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   const allClientsData = useMemo(() => {
     const map: Record<string, { name: string; phone: string; address: string; totalOrders: number; totalSpent: number; orderDates: { date: string; total: number; baskets: number }[] }> = {};
@@ -373,16 +377,27 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
   const [dateTo, setDateTo] = useState("");
 
   const filteredClients = useMemo(() => {
-    if (!dateFrom && !dateTo) return allClientsData;
-    return allClientsData.map((c) => {
-      const filtered = c.orderDates.filter((od) => {
-        if (dateFrom && od.date < dateFrom) return false;
-        if (dateTo && od.date > dateTo) return false;
-        return true;
-      });
-      return { ...c, orderDates: filtered, totalOrders: filtered.length, totalSpent: filtered.reduce((s, od) => s + od.total, 0) };
-    }).filter((c) => c.totalOrders > 0 || (!dateFrom && !dateTo));
-  }, [allClientsData, dateFrom, dateTo]);
+    let list = allClientsData;
+    if (dateFrom || dateTo) {
+      list = list.map((c) => {
+        const filtered = c.orderDates.filter((od) => {
+          if (dateFrom && od.date < dateFrom) return false;
+          if (dateTo && od.date > dateTo) return false;
+          return true;
+        });
+        return { ...c, orderDates: filtered, totalOrders: filtered.length, totalSpent: filtered.reduce((s, od) => s + od.total, 0) };
+      }).filter((c) => c.totalOrders > 0);
+    }
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((c) => c.name.toLowerCase().includes(q) || c.phone.includes(search));
+    }
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }));
+  }, [allClientsData, dateFrom, dateTo, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredClients.length / ITEMS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedClients = filteredClients.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   const handleExport = () => {
     const rows = [["Cliente", "Telefone", "Endereço", "Data do Serviço", "Cestos", "Valor do Serviço", "Total Gasto"]];
@@ -450,13 +465,31 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
         )}
       </div>
 
+      {/* Search toolbar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>{filteredClients.length} registro(s)</span>
+          <span>·</span>
+          <span>Ordem alfabética</span>
+        </div>
+        <div className="relative w-full sm:w-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar cliente..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="pl-9 w-full sm:w-64 h-9"
+          />
+        </div>
+      </div>
+
       {filteredClients.length === 0 && orders.length === 0 && clients.length === 0 ? (
         <p className="text-muted-foreground">Nenhum cliente registrado ainda.</p>
       ) : (
         <>
           {/* Mobile cards */}
           <div className="space-y-3 md:hidden">
-            {filteredClients.map((c) => (
+            {paginatedClients.map((c) => (
               <div key={c.phone} className="rounded-lg border bg-card p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
@@ -514,7 +547,7 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.map((c) => (
+                {paginatedClients.map((c) => (
                   <tr key={c.phone} className="border-b hover:bg-muted/30">
                     <td className="p-4 font-medium">{c.name}</td>
                     <td className="p-4 text-muted-foreground">{c.phone}</td>
@@ -545,6 +578,28 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {filteredClients.length > 0 && (
+            <div className="flex items-center justify-between text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
+                {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredClients.length)} de {filteredClients.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
+                  <Button key={p} variant={p === currentPage ? "default" : "outline"} size="icon" className="h-8 w-8" onClick={() => setPage(p)}>
+                    {p}
+                  </Button>
+                ))}
+                <Button variant="outline" size="icon" className="h-8 w-8" disabled={currentPage >= totalPages} onClick={() => setPage(currentPage + 1)}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
 
