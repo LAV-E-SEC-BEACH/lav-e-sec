@@ -373,61 +373,18 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
     return Object.values(map);
   }, [clients, orders]);
 
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-
   const filteredClients = useMemo(() => {
     let list = allClientsData;
-    if (dateFrom || dateTo) {
-      list = list.map((c) => {
-        const filtered = c.orderDates.filter((od) => {
-          if (dateFrom && od.date < dateFrom) return false;
-          if (dateTo && od.date > dateTo) return false;
-          return true;
-        });
-        return { ...c, orderDates: filtered, totalOrders: filtered.length, totalSpent: filtered.reduce((s, od) => s + od.total, 0) };
-      }).filter((c) => c.totalOrders > 0);
-    }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((c) => c.name.toLowerCase().includes(q) || c.phone.includes(search));
     }
     return [...list].sort((a, b) => a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }));
-  }, [allClientsData, dateFrom, dateTo, search]);
+  }, [allClientsData, search]);
 
   const totalPages = Math.max(1, Math.ceil(filteredClients.length / ITEMS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const paginatedClients = filteredClients.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
-  const handleExport = () => {
-    const rows = [["Cliente", "Telefone", "Endereço", "Data do Serviço", "Cestos", "Valor do Serviço", "Total Gasto"]];
-    filteredClients.forEach((c) => {
-      if (c.orderDates.length === 0) {
-        rows.push([c.name, c.phone, c.address, "-", "-", "-", formatCurrency(c.totalSpent)]);
-      } else {
-        c.orderDates.forEach((od, i) => {
-          rows.push([
-            i === 0 ? c.name : "",
-            i === 0 ? c.phone : "",
-            i === 0 ? c.address : "",
-            od.date,
-            String(od.baskets),
-            formatCurrency(od.total),
-            i === 0 ? formatCurrency(c.totalSpent) : "",
-          ]);
-        });
-      }
-    });
-    const csv = rows.map((r) => r.map((v) => `"${v}"`).join(",")).join("\n");
-    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `clientes_${dateFrom || "inicio"}_${dateTo || "fim"}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Planilha exportada com sucesso!");
-  };
 
   const findClient = (phone: string) => clients.find((c) => c.phone === phone);
 
@@ -443,26 +400,6 @@ function ClientsPage({ clients, orders, onAddClient, onEditClient, onDeleteClien
             <span className="sm:hidden">Novo</span>
           </Button>
         </div>
-      </div>
-
-      {/* Date filter and export */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Data Início</label>
-          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
-            className="border rounded-md px-3 py-1.5 text-sm bg-background" />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">Data Fim</label>
-          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
-            className="border rounded-md px-3 py-1.5 text-sm bg-background" />
-        </div>
-        {canDelete && (
-          <Button onClick={handleExport} variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" />
-            Exportar Planilha
-          </Button>
-        )}
       </div>
 
       {/* Search toolbar */}
