@@ -11,6 +11,7 @@ import { Expense } from "@/lib/expenses";
 import { CATEGORY_LABELS } from "@/lib/expenses";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +23,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2 } from "lucide-react";
+import { Plus, ChevronRight, UserPlus, Pencil, Download, Trash2, Search, ChevronLeft } from "lucide-react";
 import { NewClientDialog, Client } from "@/components/NewClientDialog";
 import { SupportChatBot } from "@/components/SupportChatBot";
 import { ClientUpload } from "@/components/ClientUpload";
