@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +26,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, RefreshCw, Eye } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Search, RefreshCw, Eye, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface AuditLog {
   id: string;
@@ -60,12 +72,18 @@ const ACTION_COLORS: Record<string, string> = {
 };
 
 export function AuditLogs() {
+  const { role } = useUserRole();
+  const isAdmin = role === "admin";
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterTable, setFilterTable] = useState("all");
   const [filterAction, setFilterAction] = useState("all");
   const [detailLog, setDetailLog] = useState<AuditLog | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -102,6 +120,30 @@ export function AuditLogs() {
       (l.table_name && TABLE_LABELS[l.table_name]?.toLowerCase().includes(search.toLowerCase()))
   );
 
+  // Reset page on filter/search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterTable, filterAction, logs]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+  const handleClearLogs = async () => {
+    setClearing(true);
+    const { error } = await supabase
+      .from("audit_logs")
+      .delete()
+      .not("id", "is", null);
+    setClearing(false);
+    setConfirmClear(false);
+    if (error) {
+      toast.error("Erro ao limpar logs: " + error.message);
+    } else {
+      toast.success("Logs limpos com sucesso!");
+      fetchLogs();
+    }
+  };
+
   const getChangedFields = (log: AuditLog): string[] => {
     if (log.action !== "UPDATE" || !log.old_data || !log.new_data) return [];
     const changed: string[] = [];
@@ -117,10 +159,23 @@ export function AuditLogs() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h2 className="text-xl font-bold text-foreground">Logs do Sistema</h2>
-        <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Atualizar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={fetchLogs} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Atualizar
+          </Button>
+          {isAdmin && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setConfirmClear(true)}
+              disabled={loading || logs.length === 0}
+            >
+              <Trash2 className="h-4 w-4" />
+              Limpar Logs
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2">
@@ -165,6 +220,7 @@ export function AuditLogs() {
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
         </div>
       ) : (
+        <>
         <div className="rounded-lg border border-border overflow-x-auto">
           <Table>
             <TableHeader>
@@ -178,14 +234,14 @@ export function AuditLogs() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.length === 0 ? (
+              {paginated.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     Nenhum log encontrado
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((log) => {
+                paginated.map((log) => {
                   const changedFields = getChangedFields(log);
                   return (
                     <TableRow key={log.id}>
@@ -228,7 +284,62 @@ export function AuditLogs() {
             </TableBody>
           </Table>
         </div>
+
+        {filtered.length > 0 && (
+          <div className="flex items-center justify-between gap-3 flex-wrap pt-2">
+            <p className="text-sm text-muted-foreground">
+              {(currentPage - 1) * PAGE_SIZE + 1}-
+              {Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length}
+            </p>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <span className="px-3 text-sm text-muted-foreground">
+                Página {currentPage} de {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+              >
+                Próxima
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+        </>
       )}
+
+      <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Limpar todos os logs?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação removerá <strong>permanentemente</strong> todos os registros de logs do sistema.
+              Não é possível desfazer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleClearLogs}
+              disabled={clearing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {clearing ? "Limpando..." : "Sim, limpar tudo"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Detail Dialog */}
       <Dialog open={!!detailLog} onOpenChange={(o) => !o && setDetailLog(null)}>
