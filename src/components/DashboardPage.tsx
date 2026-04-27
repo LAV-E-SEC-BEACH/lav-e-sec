@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { TrendingUp, TrendingDown, DollarSign, ShoppingBasket, Download, CalendarIcon } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, ShoppingBasket, Download, CalendarIcon, Wallet } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -16,6 +16,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   orders: Order[];
@@ -38,6 +40,37 @@ export function DashboardPage({ orders, expenses }: Props) {
 
   const selectedDateStr = formatDate(selectedDate);
 
+  // Caixa do dia selecionado
+  const [cashRegister, setCashRegister] = useState<{
+    status: "open" | "closed";
+    opening_amount: number;
+    closing_amount: number | null;
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("cash_register")
+        .select("status, opening_amount, closing_amount")
+        .eq("date", selectedDateStr)
+        .order("opened_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) {
+        setCashRegister({
+          status: data.status as "open" | "closed",
+          opening_amount: Number(data.opening_amount) || 0,
+          closing_amount: data.closing_amount != null ? Number(data.closing_amount) : null,
+        });
+      } else {
+        setCashRegister(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedDateStr]);
+
   const dayOrders = useMemo(
     () => orders.filter((o) => o.date === selectedDateStr),
     [orders, selectedDateStr]
@@ -50,6 +83,13 @@ export function DashboardPage({ orders, expenses }: Props) {
   const dayRevenue = dayOrders.reduce((s, o) => s + o.total, 0);
   const dayExpensesTotal = dayExpenses.reduce((s, e) => s + e.amount, 0);
   const dayProfit = dayRevenue - dayExpensesTotal;
+
+  // Receita em dinheiro do dia (impacta saldo físico do caixa)
+  const dayCashRevenue = dayOrders
+    .filter((o) => o.paymentMethod === "dinheiro")
+    .reduce((s, o) => s + o.total, 0);
+
+  const expectedCash = (cashRegister?.opening_amount ?? 0) + dayCashRevenue - dayExpensesTotal;
 
   const handleExportDashboard = () => {
     if (dayOrders.length === 0 && dayExpenses.length === 0) {
@@ -247,6 +287,57 @@ export function DashboardPage({ orders, expenses }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Caixa do dia */}
+      <Card>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Wallet className="h-4 w-4 text-primary" />
+              Caixa do Dia
+            </CardTitle>
+            {cashRegister ? (
+              <Badge variant={cashRegister.status === "open" ? "default" : "secondary"}>
+                {cashRegister.status === "open" ? "Aberto" : "Fechado"}
+              </Badge>
+            ) : (
+              <Badge variant="outline">Não aberto</Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!cashRegister ? (
+            <p className="text-sm text-muted-foreground py-4">
+              O caixa desta data ainda não foi aberto. Acesse a tela <span className="font-medium">Caixa</span> para abrir.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Abertura</p>
+                <p className="text-lg font-bold font-['Space_Grotesk'] mt-1">{formatCurrency(cashRegister.opening_amount)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Receita em dinheiro</p>
+                <p className="text-lg font-bold font-['Space_Grotesk'] mt-1 text-accent">{formatCurrency(dayCashRevenue)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Despesas</p>
+                <p className="text-lg font-bold font-['Space_Grotesk'] mt-1 text-destructive">{formatCurrency(dayExpensesTotal)}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  {cashRegister.status === "closed" ? "Fechamento informado" : "Saldo esperado"}
+                </p>
+                <p className="text-lg font-bold font-['Space_Grotesk'] mt-1 text-primary">
+                  {cashRegister.status === "closed" && cashRegister.closing_amount != null
+                    ? formatCurrency(cashRegister.closing_amount)
+                    : formatCurrency(expectedCash)}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
