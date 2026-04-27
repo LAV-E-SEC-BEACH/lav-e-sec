@@ -32,6 +32,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AdminUsers } from "@/pages/AdminUsers";
 import { AuditLogs } from "@/pages/AuditLogs";
+import { CashRegisterPage } from "@/components/CashRegisterPage";
 
 const Index = () => {
   const { user } = useAuth();
@@ -198,7 +199,7 @@ const Index = () => {
   const todayTotal = todayOrders.reduce((sum, o) => sum + o.total, 0);
 
   const breadcrumbLabels: Record<string, string> = {
-    orders: "Ordens de Serviço", dashboard: "Dashboard", clients: "Clientes", expenses: "Despesas", support: "Suporte",
+    orders: "Ordens de Serviço", dashboard: "Dashboard", clients: "Clientes", expenses: "Despesas", cash: "Caixa", support: "Suporte",
   };
 
   return (
@@ -322,6 +323,8 @@ const Index = () => {
           )}
 
           {currentPage === "support" && <SupportTicketsPage />}
+
+          {currentPage === "cash" && <CashRegisterPage />}
 
           {currentPage === "admin-users" && <AdminUsers />}
 
