@@ -50,6 +50,48 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_register: {
+        Row: {
+          closed_at: string | null
+          closing_amount: number | null
+          created_at: string
+          date: string
+          id: string
+          notes: string | null
+          opened_at: string
+          opening_amount: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closing_amount?: number | null
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          closed_at?: string | null
+          closing_amount?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          opening_amount?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset, ShieldCheck, ScrollText } from "lucide-react";
+import { LayoutDashboard, ClipboardList, Users, Receipt, LogOut, Settings, Menu, Headset, ShieldCheck, ScrollText, Wallet } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ const allNavItems = [
   { id: "orders", label: "Ordens de Serviço", icon: ClipboardList },
   { id: "clients", label: "Clientes", icon: Users },
   { id: "expenses", label: "Despesas", icon: Receipt },
+  { id: "cash", label: "Caixa", icon: Wallet },
   { id: "support", label: "Suporte", icon: Headset },
   { id: "admin-users", label: "Usuários", icon: ShieldCheck },
   { id: "audit-logs", label: "Logs", icon: ScrollText },
