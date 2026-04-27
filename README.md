@@ -37,56 +37,8 @@ O Lav-e-Sec é construído com um stack tecnológico moderno e robusto:
 *   **Testes:**
     *   **Vitest:** Framework de testes rápido para JavaScript/TypeScript.
     *   **Testing Library:** Utilitários para testar componentes React de forma eficaz.
-
-## Instalação e Configuração (para Desenvolvedores)
-
-Para configurar e executar o projeto Lav-e-Sec em seu ambiente de desenvolvimento local, siga os passos abaixo:
-
-### Pré-requisitos
-
-Certifique-se de ter instalado em sua máquina:
-
-*   Node.js (versão 18 ou superior)
-*   npm, yarn ou bun (gerenciador de pacotes de sua preferência)
-*   Git
-
-### Passos para Instalação
-
-1.  **Clone o Repositório:**
-    ```bash
-    git clone https://github.com/LAV-E-SEC-BEACH/lav-e-sec.git
-    cd lav-e-sec
-    ```
-
-2.  **Instale as Dependências:**
-    Utilize o gerenciador de pacotes de sua preferência:
-    ```bash
-    npm install
-    # ou yarn install
-    # ou bun install
-    ```
-
-3.  **Configuração do Supabase:**
-    O projeto utiliza o Supabase como backend. Você precisará configurar um projeto Supabase e obter suas credenciais.
-
-    *   Crie um novo projeto no [Supabase](https://supabase.com/).
-    *   Após criar o projeto, vá em `Project Settings > API` e copie a `Project URL` e a `anon public` `Project API Key`.
-    *   Crie um arquivo `.env` na raiz do seu projeto `lav-e-sec` com as seguintes variáveis:
-        ```env
-        VITE_SUPABASE_URL="SUA_PROJECT_URL_DO_SUPABASE"
-        VITE_SUPABASE_PUBLISHABLE_KEY="SUA_ANON_PUBLIC_KEY_DO_SUPABASE"
-        ```
-    *   **Migrações do Banco de Dados:** As migrações do banco de dados estão localizadas em `supabase/migrations`. Você pode aplicá-las ao seu projeto Supabase usando a CLI do Supabase ou manualmente através do SQL Editor.
-    *   **Edge Function `admin-users`:** A função `admin-users` (localizada em `supabase/functions/admin-users`) precisa ser implantada no seu projeto Supabase. Certifique-se de configurar a `SUPABASE_SERVICE_ROLE_KEY` como uma variável de ambiente para esta Edge Function no Supabase.
-
-4.  **Execute a Aplicação:**
-    Após instalar as dependências e configurar o Supabase, você pode iniciar o servidor de desenvolvimento:
-    ```bash
-    npm run dev
-    # ou yarn dev
-    # ou bun dev
-    ```
-    A aplicação estará acessível em `http://localhost:5173` (ou a porta indicada pelo Vite).
+## Acesso ao sistema
+   -> Link: https://lavanderiaesec.vercel.app/
 
 ## Contribuição
 
