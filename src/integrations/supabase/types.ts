@@ -277,6 +277,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cash_rules_active_at: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
