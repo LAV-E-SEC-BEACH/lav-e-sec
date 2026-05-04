@@ -33,6 +33,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { AdminUsers } from "@/pages/AdminUsers";
 import { AuditLogs } from "@/pages/AuditLogs";
 import { CashRegisterPage } from "@/components/CashRegisterPage";
+import { CashRuleBanner } from "@/components/CashRuleBanner";
 
 const Index = () => {
   const { user } = useAuth();
@@ -90,7 +91,15 @@ const Index = () => {
       user_id: user.id, name, phone, baskets, total, status: "washing", date,
       payment_method: paymentMethod,
     } as any).select().single();
-    if (error) { toast.error("Erro ao salvar atendimento."); return; }
+    if (error) {
+      const msg = (error.message || "").toString();
+      if (msg.includes("CAIXA_NAO_ABERTO")) {
+        toast.error("Abra o caixa do dia antes de criar uma ordem de serviço.");
+      } else {
+        toast.error("Erro ao salvar atendimento.");
+      }
+      return;
+    }
     const order: Order = { id: data.id, date, name, phone, baskets, total, status: "washing", paymentMethod };
     setOrders((prev) => [order, ...prev]);
     setSelectedOrder(order); setDialogOpen(true); setShowForm(false);
@@ -223,6 +232,7 @@ const Index = () => {
         <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
           {currentPage === "orders" && (
             <div className="space-y-5">
+              <CashRuleBanner onGoToCash={() => setCurrentPage("cash")} />
               <div className="flex items-center justify-between gap-2">
                 <h1 className="text-xl md:text-2xl font-bold tracking-tight">📋 Ordens de Serviço</h1>
                 <Button onClick={() => setShowForm(!showForm)} className="gap-2" size="sm">
