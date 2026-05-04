@@ -112,7 +112,12 @@ export function CashRegisterPage() {
       notes: openingNotes || null,
     } as any);
     if (error) {
-      toast.error("Erro ao abrir caixa.");
+      const msg = (error.message || "").toString();
+      if (msg.includes("CAIXA_ANTERIOR_ABERTO")) {
+        toast.error("Existe um caixa de dia anterior em aberto. Encerre-o antes de abrir um novo.");
+      } else {
+        toast.error("Erro ao abrir caixa.");
+      }
       return;
     }
     toast.success(`Caixa aberto com ${formatCurrency(amount)}`);
