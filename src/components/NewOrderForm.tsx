@@ -3,8 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { calculateTotal, formatCurrency, PRICE_PER_BASKET, PaymentMethod, PAYMENT_METHOD_LABELS } from "@/lib/laundry";
 import { Plus, Minus, ShoppingBasket, CreditCard, Smartphone, Wallet, Banknote } from "lucide-react";
 
@@ -66,47 +64,43 @@ export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-2 relative">
             <Label htmlFor="name">Nome do Cliente *</Label>
-            <Popover open={nameOpen && filteredClients.length > 0} onOpenChange={setNameOpen}>
-              <PopoverTrigger asChild>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setNameOpen(true);
-                  }}
-                  onFocus={() => setNameOpen(true)}
-                  placeholder="Ex: João Silva"
-                  maxLength={100}
-                  required
-                  autoComplete="off"
-                />
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-                <Command>
-                  <CommandList>
-                    <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                    <CommandGroup heading="Clientes cadastrados">
-                      {filteredClients.map((c) => (
-                        <CommandItem
-                          key={c.phone}
-                          value={`${c.name} ${c.phone}`}
-                          onSelect={() => handleSelectClient(c)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">{c.name}</span>
-                            <span className="text-xs text-muted-foreground">{c.phone}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => {
+                setName(e.target.value);
+                setNameOpen(true);
+              }}
+              onFocus={() => setNameOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") setNameOpen(false);
+              }}
+              placeholder="Ex: João Silva"
+              maxLength={100}
+              required
+              autoComplete="off"
+            />
+            {nameOpen && filteredClients.length > 0 && (
+              <div className="absolute left-0 right-0 z-50 mt-1 max-h-56 overflow-auto rounded-md border bg-popover p-1 shadow-md" role="listbox">
+                {filteredClients.map((c) => (
+                  <button
+                    key={c.phone}
+                    type="button"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleSelectClient(c);
+                    }}
+                    className="flex w-full flex-col rounded-sm px-3 py-2 text-left outline-none hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                    role="option"
+                  >
+                    <span className="font-medium">{c.name}</span>
+                    <span className="text-xs text-muted-foreground">{c.phone}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
