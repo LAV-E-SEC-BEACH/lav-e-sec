@@ -28,9 +28,12 @@ export function NewOrderForm({ onSubmit, knownClients = [] }: Props) {
   const total = calculateTotal(baskets);
 
   const filteredClients = useMemo(() => {
-    if (!name.trim()) return knownClients;
+    const sorted = [...knownClients].sort((a, b) =>
+      a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" })
+    );
+    if (!name.trim()) return sorted;
     const q = name.toLowerCase();
-    return knownClients.filter(
+    return sorted.filter(
       (c) => c.name.toLowerCase().includes(q) || c.phone.includes(q)
     );
   }, [name, knownClients]);
